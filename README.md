@@ -8,6 +8,7 @@ This software was developed based on Python 3.9.0
 
 ## Set Up Local
 Run ``pip3 install -r requirements.txt`` in the root directory. If you are using IDE like PyCharm, you can download all the requirements with it.
+We do recommend to run it with Pycharm.
 
 ## Run Local
 
@@ -17,7 +18,7 @@ The variables specified in ``config.py`` control settings. Once these are adjust
 
 After the notification "INFO - Waiting for secondary nodes to connect" shows, run:
 
-`python3 secondary.py`
+``python3 secondary.py``
 
 Need to notice that the result output path is also an adjustable configuration.
 

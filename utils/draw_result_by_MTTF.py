@@ -1,4 +1,3 @@
-import ax
 import matplotlib.pyplot as plt
 from matplotlib.ticker import PercentFormatter
 import matplotlib as mpl
