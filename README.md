@@ -8,7 +8,8 @@ This software was developed based on Python 3.9.0
 
 ## Set Up Local
 Run ``pip3 install -r requirements.txt`` in the root directory. If you are using IDE like PyCharm, you can download all the requirements with it.
-We do recommend to run it with Pycharm.
+We recommend the use of PyCharm for running this software on a single laptop or server for evaluation purposes.
+By installing and using PyCharm, the single server version of software will execute on a wide range of operating systems ranging from MacOS to Windows.  
 
 ## Run Local
 

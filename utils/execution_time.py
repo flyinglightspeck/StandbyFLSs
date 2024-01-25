@@ -1,7 +1,10 @@
+import os
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from collections import Counter
-import numpy as np
+
+if not os.path.exists('.assets/figure'):
+    os.makedirs('.assets/figure', exist_ok=True)
 
 mpl.rcParams['font.family'] = 'Times New Roman'
 
@@ -32,16 +35,16 @@ ax.set_title('Execution Time (Second)', loc='left')
 # ax.set_ylabel('Execution Time (Second)', loc='top', rotation=0, labelpad=-124)
 ax.set_xlabel('Group Size (G)', loc='right', labelpad=-1, fontsize='large')
 
-plt.text(7.5, 88.5, 'CANF Execution Time', color=CANF_line.get_color(), fontweight='bold')
+plt.text(7.5, 88.5, 'CANF', color=CANF_line.get_color(), fontweight='bold')
 
-plt.text(7.5, 4.5, 'k-means Execution Time', color=kmeans_line.get_color(), fontweight='bold')
+plt.text(7.5, 4.5, 'k-means', color=kmeans_line.get_color(), fontweight='bold')
 
 # Add legend
 # plt.legend()
 
 # plt.tight_layout()
 # plt.show(dpi=500)
-plt.savefig(f"cmpRTkmeansCANF.png", dpi=500)
+plt.savefig(f"./assets/figure/cmpRTkmeansCANF.png", dpi=500)
 plt.close()
 
 
@@ -73,6 +76,6 @@ ax.get_yaxis().set_major_locator(plt.MaxNLocator(integer=True))
 
 
 # plt.tight_layout()
-plt.savefig(f"group_size.png", dpi=500)
+plt.savefig(f"./assets/figure/group_size.png", dpi=500)
 # plt.show(dpi=500)
 plt.close()
