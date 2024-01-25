@@ -1,10 +1,13 @@
-# Failure Handling for 3D Displays Using FLSs
+# Standby FLSs for FLS Illumination
+
+## Python Version
+This software was developed based on Python 3.9.0
 
 ## Clone
 ``git clone https://github.com/flslab/FailureHandling.git``
 
-## Set Up
-Run ``bash setup.sh`` to set up the project. If you are using IDE like PyCharm, it will automatically download all the requirements.
+## Set Up Local
+Run ``pip3 install -r requirements.txt`` in the root directory. If you are using IDE like PyCharm, you can download all the requirements with it.
 
 ## Run Local
 
@@ -18,7 +21,7 @@ After the notification "INFO - Waiting for secondary nodes to connect" shows, ru
 
 Need to notice that the result output path is also an adjustable configuration.
 
-## Run on Cloud Lab
+## Set Up and Run on Cloud Lab
 First, set up a cluster of servers. Creat a cloudlab profile using the file ``profile.py``, then start your own experiments with any chosen type of nodes. 
 Ideally, the total number of cores of the servers should equal or be greater than the number of points in the point cloud (number of FLSs).
 Otherwise, the lack of cores may cause incorrect results. Normally, when the accessible resource is limited, one core for 2 to 4 points will also work. 
@@ -34,7 +37,9 @@ Once it's settle, checkout the number of total configurations, and change the nu
 The system will traverse all these configuration sets.
 
 Finally, modify the script `decentralized_gen.sh` following the comment just like previous files. Then run the script to clone the
-project and setup on cloudlab (See sections above).
+project and setup on cloudlab (See section above).
+
+Run ``bash setup.sh`` to set up the project.
 
 After all above are done, run `bash nohup_run.sh` on the primary node (node with index 0). Use `tail -f my.log` to trace output in the root directory.
 

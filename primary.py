@@ -157,8 +157,6 @@ class PrimaryNode:
             client, address = self.sock.accept()
             logger.debug(address)
             self.client_sockets.append(client)
-            logger.info(f"{i} connected")
-        logger.info(f"All connected")
 
     def _setup_results_directory(self):
         if len(CONFIG.FILE_NAME_KEYS):
