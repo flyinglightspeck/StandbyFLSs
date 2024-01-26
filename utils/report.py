@@ -317,18 +317,18 @@ def get_report_metrics_no_group(dir_meta, time_range):
     return metrics
 
 
-def create_csv_from_timeline(directory):
-    if not os.path.exists(directory):
-        return
-
-    with open(os.path.join(directory, 'bucket_face_G0_R90_T60_S6_PTrue.json'), "r") as file:
-        timeline = json.load(file)
-
-    point_metrics, standby_metrics = gen_point_metrics_no_group(timeline, 0)
-    write_csv(directory, point_metrics, 'illuminating')
-    write_csv(directory, standby_metrics, 'standby')
-
-    return timeline
+# def create_csv_from_timeline(directory):
+#     if not os.path.exists(directory):
+#         return
+#
+#     with open(os.path.join(directory, '.json'), "r") as file:
+#         timeline = json.load(file)
+#
+#     point_metrics, standby_metrics = gen_point_metrics_no_group(timeline, 0)
+#     write_csv(directory, point_metrics, 'illuminating')
+#     write_csv(directory, standby_metrics, 'standby')
+#
+#     return timeline
 
 
 def write_final_report(csv_file_path, target_file_path, name, group_num, time_range):
