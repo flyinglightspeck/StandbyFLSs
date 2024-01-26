@@ -53,4 +53,4 @@ esac
 # Install Python packages using pip
 pip3 install -r requirements.txt
 
-echo "Now run python3 server.py"
+echo "Now run everything follow the instruction from README.md"
