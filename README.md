@@ -6,12 +6,39 @@ This software was developed based on Python 3.9.0
 ## Clone
 ``git clone https://github.com/flslab/FailureHandling.git``
 
+## Running using Venv
+
+You can use the `setup_venv.sh` script to create and activate a virtual environment or alternatively follow these steps to set it up manually.
+First create a virtual environment using venv. You can use any name instead of env.
+
+```
+cd StandbyFLSs
+python3.9 -m venv env
+```
+
+Then, activate the virtual environment.
+
+```
+source env/bin/activate
+```
+
+On windows use the following instead:
+
+```
+env/Scripts/activate.bat //In CMD
+env/Scripts/Activate.ps1 //In Powershel
+```
+
+You can deactivate the virtual environment by running `deactivate` in the terminal.
+
+
 ## Set Up Local
 Run ``bash setup.sh`` to set up everything.
 
 If anything went wrong with the bash command, simply run ``pip3 install -r requirements.txt`` in the root directory. If you are using IDE like PyCharm, you can download all the requirements with it.
 We recommend the use of PyCharm for running this software on a single laptop or server for evaluation purposes.
-By installing and using PyCharm, the single server version of software will execute on a wide range of operating systems ranging from MacOS to Windows.  
+By installing and using PyCharm, the single server version of software will execute on a wide range of operating systems ranging from macOS to Windows.  
+
 
 ## Run Local
 
@@ -172,4 +199,43 @@ By specifying variables: `shapes, max_speed, max_acceleration, max_deceleration,
 | Min Dist To Centroid     | Minimum distance from each point to its group centroid.                                                                       |
 | Median  Dist To Centroid | Median distance from each point to its group centroid.                                                                        |
 | Max Dist To Centroid     | Maximum distance from each point to its group centroid.                                                                       |
+
+
+## Detect Obstructing Standby FLSs
+Standby FLSs show remain dark while waiting to recover failed FLSs. Thus, it may block some other illuminating FLSs and diminish the user's immersive experience.
+We assume that the user's eye position can be tracked by some tracker mounted on the user's body/head. 
+With all these information, we considered the user's eye gaze as a ray, and calculate the obstructing FLSs based on the ray-box-intersection method.
+
+### Obstructing FLS **Detection**
+To run a detection, run ``./utils/obstructing_detection.py``.
+Specify the configuration and shapes to check in the file, instructions can be found in comments.
+
+The output can be found in ``./assets/obstructing/``, based on your setting, there will be a directories generated.
+The result will report the number of visible illuminating FLSs and obstructing standby FLSs if the user look from the {front, back, top, bottom, left, right}, total 6 views.
+
+To solve obstruction detected from a view, run ``solve_obstructing.py`` to move FLSs back. 
+The obstructing standby FLS will replace the illuminating FLS that it was blocking, and become an illuminating FLS.
+The previous blocked illuminating FLS will move back, hide behind the new illuminating FLS, and become a standby FLS, replacing the previous obstructing FLS.
+FLSs may travel a certain distance, the report file will report the distance traveled by the obstructing FLS and illuminating FLS;
+the initial distance between the obstructing FLS and illuminating FLS;
+number of obstructing FLSs blocking a single illuminating FLS;
+the original and new standby FLS's position to the center of the group that they were assigned with;
+the original and new MTID for a failure in the group recovered by standby FLSs.
+The report can be found in  ``./assets/obstructing/Q{illumination cell to display cell ratio}``
+
+To solve obstruction detected from all views as a whole process, run ``move_back_all_views.py``.
+Starting from the first view, obstructing standby FLSs detected from this view will be moved back, then those detected from the next view.
+Do this for all six views, and report same metrics as previous.
+
+
+### Obstructing FLS **Prevention**
+To run a detection, run ``./utils/obstructing_prevention.py``.
+Specify the configuration and shapes to check in the file, instructions can be found in comments.
+
+The output can be found in ``./assets/obstructing/``, based on your setting, there will be directories generated.
+The result will report the number of obstructing FLSs user will see if the user walk around the shape (as a circle), centering the center of the shape. 
+Each time, the user will walk and the vector pointing from the center of the shape toward the user's eye will form a {granularity} degree angle with the previous one.
+
+After recording all obstructing information, those obstructing FLSs will look for closest illuminating FLS, and hide inside its illumination cell (if Q > 3).
+
 

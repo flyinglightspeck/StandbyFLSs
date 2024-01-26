@@ -1,4 +1,5 @@
 import csv
+import os
 import statistics
 import math
 import numpy as np
@@ -358,9 +359,14 @@ def calculate_obstructing(group_file, meta_direc, ratio, k, shape):
         ["Shape", "K", "Ratio", "View", "Visible_Illum", "Obstructing FLS", "Min Times Checked",
          "Mean Times Checked",
          "Max Times Checked"]]
-    report_path = f"{meta_direc}/obstructing/R{ratio}"
 
-    output_path = f"{meta_direc}/obstructing/R{ratio}/K{k}"
+    report_path = f"{meta_direc}/obstructing/Q{ratio}"
+    if not os.path.exists(report_path):
+        os.makedirs(report_path, exist_ok=True)
+
+    output_path = f"{meta_direc}/obstructing/Q{ratio}/K{k}"
+    if not os.path.exists(output_path):
+        os.makedirs(output_path, exist_ok=True)
 
     points, boundary, standbys, check_times = get_points(shape, k, file_folder, ratio)
 
@@ -408,9 +414,6 @@ def calculate_obstructing(group_file, meta_direc, ratio, k, shape):
 
     for i in range(len(views)):
 
-        if i != 4:
-            continue
-
         print(f"START: {shape}, K: {k}, Ratio: {ratio} ,{views[i]}")
 
         camera = cam_positions[i]
@@ -454,7 +457,7 @@ def calculate_obstructing(group_file, meta_direc, ratio, k, shape):
             [shape, k, ratio, views[i], len(visible_illum), len(blocking_index), min(check_times),
              statistics.mean(check_times), max(check_times)])
 
-    with open(f'{report_path}/report_R{ratio}_K{k}_{shape}.csv', mode='w', newline='') as file:
+    with open(f'{report_path}/report_Q{ratio}_K{k}_{shape}.csv', mode='w', newline='') as file:
         writer = csv.writer(file)
 
         # Write the data from the list to the CSV file
@@ -467,15 +470,13 @@ if __name__ == "__main__":
     file_folder = "../assets/pointcloud"
     meta_dir = "../assets"
 
-    p_list = []
-    for illum_to_disp_ratio in [11]:
+    Q_list = [1, 3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.
 
-        for k in [3]:
-            for shape in ["skateboard", "dragon", "hat"]:
+    # Select these base on the group formation you have, see '../assets/pointclouds'
+    k_list = [3, 20]  # This is the size of group constructed by the group formation technique that you would like to test.
+    shape_list = ["skateboard", "dragon", "hat"]  # This is the list of shape to run this on
+
+    for illum_to_disp_ratio in Q_list:
+        for k in k_list:
+            for shape in shape_list:
                 calculate_obstructing(file_folder, meta_dir, illum_to_disp_ratio, k, shape)
-    #             p_list.append(mp.Process(target=calculate_obstructing,
-    #                                      args=(file_folder, meta_dir, illum_to_disp_ratio, k, shape)))
-    #
-    # for p in p_list:
-    #     print(p)
-    #     p.start()

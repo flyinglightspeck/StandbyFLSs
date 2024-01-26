@@ -1,16 +1,7 @@
-import csv
-import os
-import statistics
-import math
-from collections import Counter
 
-import numpy as np
-import pandas as pd
-from tqdm import tqdm
-import multiprocessing as mp
-import matplotlib.pyplot as plt
+from collections import Counter
 import matplotlib as mpl
-from find_obstructing_raybox import *
+from obstructing_detection import *
 
 
 def rotate_vector(vector, angle_degrees):
@@ -128,7 +119,9 @@ def calculate_obstructing_omnidegree(ptcld_folder, meta_direc, ratio, k, shape, 
     # fig = plt.figure()
     # ax = fig.add_subplot(projection='3d')
 
-    output_path = f"{meta_direc}/obstructing/R{ratio}/K{k}"
+    output_path = f"{meta_direc}/obstructing/Q{ratio}/K{k}"
+    if not os.path.exists(output_path):
+        os.makedirs(output_path, exist_ok=True)
 
     txt_file = f"{shape}.txt"
     standby_file = f"{shape}_standby.txt"
@@ -182,7 +175,7 @@ def run_with_multiProcess(ptcld_folder, meta_dir, illum_to_disp_ratio, granulari
 
 
 def prevent_obstructions(ptcld_folder, meta_direc, ratio, k, shape, granularity, obstructing_maps=None):
-    output_path = f"{meta_direc}/obstructing/R{ratio}/K{k}"
+    output_path = f"{meta_direc}/obstructing/Q{ratio}/K{k}"
 
     txt_file = f"{shape}.txt"
     standby_file = f"{shape}_standby.txt"
@@ -216,7 +209,7 @@ def prevent_obstructions(ptcld_folder, meta_direc, ratio, k, shape, granularity,
         standbys = new_obs_stb_coords
         # print(standbys)
 
-        move_back_path = f"{meta_dir}/obstructing/R{ratio}/K{k}"
+        move_back_path = f"{meta_dir}/obstructing/Q{ratio}/K{k}"
         os.makedirs(move_back_path+"/points", exist_ok=True)
         np.savetxt(f'{move_back_path}/points/{shape}_back_standby.txt', standbys, fmt='%d', delimiter=' ')
 
@@ -250,19 +243,24 @@ if __name__ == "__main__":
     ptcld_folder = "../assets/pointcloud"
     meta_dir = "../assets"
 
-    granularity = 45
+    # We assume the user walk as a circle, centering the center of the shape.
+    # Each time, the user will walk and the vector pointing from the center of the shape toward the user's eye will form
+    # a {granularity} degree angle with the previous one.
+    granularity = 45  # the granularity of degree changes.
 
-    p_list = []
-    for illum_to_disp_ratio in [3, 5, 10]:
+    Q_list = [3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.
 
-        for k in [3, 20]:
-            for shape in ["skateboard", "dragon", "hat"]:
-                # obstructing_by_degree = calculate_obstructing_omnidegree(
-                #     ptcld_folder, meta_dir, illum_to_disp_ratio, k, shape, granularity, step=1)
+
+    # Select these base on the group formation you have, see '../assets/pointclouds'
+    k_list = [3, 20]  # This is the size of group constructed by the group formation technique that you would like to test.
+    shape_list = ["skateboard", "dragon", "hat"]  # This is the list of shape to run this on
+
+    for illum_to_disp_ratio in Q_list:
+        for k in k_list:
+            for shape in shape_list:
+                calculate_obstructing_omnidegree(ptcld_folder, meta_dir, illum_to_disp_ratio, k, shape, granularity)
+
+    for illum_to_disp_ratio in Q_list:
+        for k in k_list:
+            for shape in shape_list:
                 prevent_obstructions(ptcld_folder, meta_dir, illum_to_disp_ratio, k, shape, granularity)
-        # p_list.append(mp.Process(target=run_with_multiProcess,
-        #                          args=(ptcld_folder, meta_dir, illum_to_disp_ratio, granularity)))
-    #
-    # for p in p_list:
-    #     print(p)
-    #     p.start()

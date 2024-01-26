@@ -1,4 +1,6 @@
-from find_obstructing_raybox import *
+import os
+
+from obstructing_detection import *
 
 
 def normalize(v):
@@ -250,7 +252,7 @@ def solve_single_view(shape, k, ratio, view, lastview, user_eye, group_file, out
     return metrics
 
 
-def solve_obstructing(group_file, meta_direc, ratio):
+def solve_obstructing(group_file, meta_direc, ratio, k_list, shape_list):
     title = [
         "Shape", "K", "Ratio", "View",
         "Min Dist Illum", "Max Dist Illum", "Avg Dist Illum",
@@ -263,13 +265,16 @@ def solve_obstructing(group_file, meta_direc, ratio):
         "Dist To Center Change", "MTID Change", "Obstructing Nums"]
     result = [title]
 
-    for k in [3, 20]:
-        report_path = f"{meta_direc}/obstructing/R{ratio}"
+    for k in k_list:
+        report_path = f"{meta_direc}/obstructing/Q{ratio}"
+        if not os.path.exists(report_path):
+            os.makedirs(report_path, exist_ok=True)
 
-        output_path = f"{meta_direc}/obstructing/R{ratio}/K{k}"
+        output_path = f"{meta_direc}/obstructing/Q{ratio}/K{k}"
+        if not os.path.exists(output_path):
+            os.makedirs(output_path, exist_ok=True)
 
-        for shape in ["skateboard", "dragon", 'hat']:
-            # for shape in ["skateboard", "dragon"]:
+        for shape in shape_list:
 
             txt_file = f"{shape}.txt"
             standby_file = f"{shape}_standby.txt"
@@ -301,8 +306,6 @@ def solve_obstructing(group_file, meta_direc, ratio):
             # np.savetxt(f'{output_path}/points/{shape}_standby_solve.txt', standbys, fmt='%f', delimiter=' ')
 
             for i in range(len(views)):
-                # if i != 2:
-                #     continue
                 view = views[i]
                 user_eye = eye_positions[i]
                 lastview = ""
@@ -310,7 +313,7 @@ def solve_obstructing(group_file, meta_direc, ratio):
                                             test=False)
                 print(list(zip(title, metrics)))
                 result.append(metrics)
-    with open(f'{report_path}/solve_R{ratio}.csv', mode='w', newline='') as file:
+    with open(f'{report_path}/solve_Q{ratio}.csv', mode='w', newline='') as file:
         writer = csv.writer(file)
 
         # Write the data from the list to the CSV file
@@ -322,12 +325,11 @@ if __name__ == "__main__":
 
     file_folder = "../assets/pointcloud"
     meta_dir = "../assets"
+    Q_list = [1, 3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.
 
-    p_list = []
-    for illum_to_disp_ratio in [1, 3, 5, 10]:
-        solve_obstructing(file_folder, meta_dir, illum_to_disp_ratio)
-    #     p_list.append(mp.Process(target=calculate_obstructing, args=(file_folder, meta_dir, illum_to_disp_ratio)))
-    #
-    # for p in p_list:
-    #     # print(t)
-    #     p.start()
+    # Select these base on the group formation you have, see '../assets/pointclouds'
+    k_list = [3, 20]  # This is the size of group constructed by the group formation technique that you would like to test.
+    shape_list = ["skateboard", "dragon", "hat"]  # This is the list of shape to run this on
+
+    for illum_to_disp_ratio in Q_list:
+        solve_obstructing(file_folder, meta_dir, illum_to_disp_ratio, k_list, shape_list)

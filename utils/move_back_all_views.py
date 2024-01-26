@@ -1,7 +1,8 @@
 import csv
+import os
 
 from solve_obstructing import solve_single_view
-from find_obstructing_raybox import calculate_single_view, get_points_from_file
+from obstructing_detection import calculate_single_view, get_points_from_file
 import multiprocessing as mp
 
 
@@ -23,15 +24,19 @@ def solve_all_views(group_file, meta_direc, ratio, k, shape):
         "Min Dist To Center", "Max Dist To Center", "Avg Dist To Center", "MTID",
         "Dist To Center Change", "MTID Change", "Obstructing Nums"]]
 
-    report_path = f"{meta_direc}/obstructing/R{ratio}"
+    report_path = f"{meta_direc}/obstructing/Q{ratio}"
+    if not os.path.exists(report_path):
+        os.makedirs(report_path, exist_ok=True)
 
-    output_path = f"{meta_direc}/obstructing/R{ratio}/K{k}"
+    output_path = f"{meta_direc}/obstructing/Q{ratio}/K{k}"
+    if not os.path.exists(output_path):
+        os.makedirs(output_path, exist_ok=True)
 
     txt_file = f"{shape}.txt"
     standby_file = f"{shape}_standby.txt"
     points, boundary, standbys = get_points_from_file(ratio, group_file, output_path, txt_file, standby_file)
 
-    cam_positions = [
+    eye_positions = [
         # top
         [boundary[0][0] / 2 + boundary[1][0] / 2, boundary[0][1] / 2 + boundary[1][1] / 2,
          boundary[1][2] + 100],
@@ -52,22 +57,22 @@ def solve_all_views(group_file, meta_direc, ratio, k, shape):
          boundary[0][0] / 2 + boundary[1][0] / 2]
     ]
 
-    # views = ["top", "bottom", "left", "right", "front", "back"]
-    views = ["top"]
+    views = ["top", "bottom", "left", "right", "front", "back"]
+    # views = ["top"]
 
     for i in range(len(views)):
 
         view = views[i]
-        camera = cam_positions[i]
+        user_eye = eye_positions[i]
 
         txt_file = f"{shape}.txt"
         standby_file = f"{shape}_{views[i-1]}_standby.txt" if i > 1 else f"{shape}_back_standby.txt"
         points, boundary, standbys = get_points_from_file(ratio, group_file, output_path, txt_file, standby_file)
 
-        metrics_find = calculate_single_view(shape, k, ratio, view, points, camera, output_path)
+        metrics_find = calculate_single_view(shape, k, ratio, view, points, user_eye, output_path)
         result_find.append(metrics_find)
 
-        metrics_solve = solve_single_view(shape, k, ratio, view, "_" + views[i - 1] if i > 1 else "_back", camera,
+        metrics_solve = solve_single_view(shape, k, ratio, view, "_" + views[i - 1] if i > 1 else "_back", user_eye,
                                           group_file, output_path)
 
         print(metrics_solve)
@@ -75,27 +80,14 @@ def solve_all_views(group_file, meta_direc, ratio, k, shape):
         result_solve.append(metrics_solve)
 
 
-    #
-    # for i in range(len(views)):
-    #     view = views[i]
-    #     camera = cam_positions[i]
-    #
-    #     txt_file = f"{shape}.txt"
-    #     standby_file = f"{shape}_{views[-1]}_standby.txt"
-    #     points, boundary, standbys = get_points_from_file(ratio, group_file, output_path, txt_file, standby_file)
-    #
-    #     metrics_find = calculate_single_view(shape, k, ratio, view, points, camera, output_path)
-    #     result_find.append(metrics_find)
-
-
-    with open(f'{report_path}/report_find_R{ratio}_K{k}_{shape}_sec.csv', mode='w', newline='') as file:
+    with open(f'{report_path}/report_detect_Q{ratio}_K{k}_{shape}_sec.csv', mode='w', newline='') as file:
         writer = csv.writer(file)
 
         # Write the data from the list to the CSV file
         for row in result_find:
             writer.writerow(row)
 
-    with open(f'{report_path}/report_solve_R{ratio}_K{k}_{shape}_sec.csv', mode='w', newline='') as file:
+    with open(f'{report_path}/report_solve_Q{ratio}_K{k}_{shape}_sec.csv', mode='w', newline='') as file:
         writer = csv.writer(file)
 
         # Write the data from the list to the CSV file
@@ -107,17 +99,15 @@ def solve_all_views(group_file, meta_direc, ratio, k, shape):
 if __name__ == "__main__":
 
     file_folder = "../assets/pointcloud"
-    meta_dir = "../assets/obstructing"
+    meta_dir = "../assets/"
 
-    p_list = []
-    for illum_to_disp_ratio in [1, 3, 5, 10]:
+    Q_list = [1, 3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.
 
-        for k in [3, 20]:
+    # Select these base on the group formation you have, see '../assets/pointclouds'
+    k_list = [3, 20]  # This is the size of group constructed by the group formation technique that you would like to test.
+    shape_list = ["skateboard", "dragon", "hat"]  # This is the list of shape to run this on
 
-            for shape in ["skateboard", "dragon", "hat"]:
+    for illum_to_disp_ratio in Q_list:
+        for k in k_list:
+            for shape in shape_list:
                 solve_all_views(file_folder, meta_dir, illum_to_disp_ratio, k, shape)
-                # p_list.append(mp.Process(target=solve_all_views, args=(file_folder, meta_dir, illum_to_disp_ratio, k, shape)))
-
-    # for p in p_list:
-    #     print(p)
-    #     p.start()
