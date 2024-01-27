@@ -168,14 +168,17 @@ In a Dronevision/FLS Display context, this should be the information from the or
 
 ## Analytical Models
 The movement of FLSs are calculated using the velocity model. We suppose all FLSs have the same maximum speed, maximum acceleration and deceleration.
-An FLS's moving time and MTID (Mean time to illuminate a dark point due to FLS failure) is calculated using this model.
+FLS will start from a speed of 0, and will always accelerate to a max speed if it can.
+When an FLS is approaching its destination, it will decelerate with max deceleration and come to a halt at its destination.
+The velocity model can be found in ``./velocity.py``.
+An FLS's moving time and **MTID** (Mean time to illuminate a dark point due to FLS failure) is calculated using this model.
 
 Once a reliability group is constructed, there will be a group centroid for standby FLS. The average distance from a group centroid 
 to a group member is calculated using the average value of distances of all points to their group centroid.
 The Average MTID reported were calculated using the average value of the time for a standby FLS/newly deployed FLS to recover a failed illuminating FLS.
 Each of these time is the time traveled for an FLS to arrive at the illuminating point.
 
-The Script to compare two group formation techniques: CANF and k-means can be found in `./util/cmp_shape.py`.
+The Script to compare the MTID of two group formation techniques: CANF and k-means can be found in `./util/cmp_shape.py`.
 By specifying variables: `shapes, max_speed, max_acceleration, max_deceleration, disp_cell_size`, the report will be generated in `./assets/mtid_report.csv`.
 
 | Term                     | Definition                                                                                                                    |
