@@ -1,3 +1,16 @@
+This repository contains software that models deployment and failure handling of FLSs using standbys.
+
+Authors:  Hamed Alimohammadzadeh(halimoha@usc.edu), Shuqin Zhu (shuqinzh@usc.edu) and Shahram Ghandeharizadeh (shahram@usc.edu)
+
+# Features
+   * Velocity model of an FLS consisting of acceleration, deceleration, and speed components.
+   * Two failure models for an FLS:  RandTTL and BetaTTL.
+   * Fix-sized reliability groups consisting of G illuminating FLSs and 1 standby FLSs.
+   * Mean Time to Illuminate a Dark (MTID) point after an FLS fails.  
+   * A configurable simulation model to quantify the Quality of Illumination (QoI) as a function of time for a point cloud.  Each FLS is modeled as a process.
+
+# Limitations
+
 # Standby FLSs for FLS Illumination
 
 ## Python Version
