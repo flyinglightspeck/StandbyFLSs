@@ -115,11 +115,11 @@ def check_obstructing(user_eye, points, ratio, standbys):
     return obstructing_list, obstructing_coord, blocked_coord
 
 
-def calculate_obstructing_omnidegree(ptcld_folder, meta_direc, ratio, k, shape, granularity, write_output=True):
+def calculate_obstructing_omnidegree(ptcld_folder, meta_direc, ratio, G, shape, granularity, write_output=True):
     # fig = plt.figure()
     # ax = fig.add_subplot(projection='3d')
 
-    output_path = f"{meta_direc}/obstructing/Q{ratio}/K{k}"
+    output_path = f"{meta_direc}/obstructing/Q{ratio}/G{G}"
     if not os.path.exists(output_path):
         os.makedirs(output_path, exist_ok=True)
 
@@ -147,7 +147,7 @@ def calculate_obstructing_omnidegree(ptcld_folder, meta_direc, ratio, k, shape, 
         user_pos = shape_center + rotate_vector(vector, angle)
         # ax.scatter(*user_pos)
 
-        print(f"START: {shape}, K: {k}, Ratio: {ratio}, Angle:{angle}")
+        print(f"START: {shape}, G: {G}, Ratio: {ratio}, Angle:{angle}")
 
         obstructing_list, obstructing_coord, blocked_coord = check_obstructing(user_pos, points, ratio, standbys)
 
@@ -160,7 +160,7 @@ def calculate_obstructing_omnidegree(ptcld_folder, meta_direc, ratio, k, shape, 
                    delimiter=' ')
 
         print(
-            f"{shape}, K: {k}, Ratio: {ratio} ,view: {angle}, Number of Illuminating FLS: {Counter(obstructing_list)}")
+            f"{shape}, G: {G}, Ratio: {ratio} ,view: {angle}, Number of Illuminating FLS: {Counter(obstructing_list)}")
 
         degree_obst_map[angle] = obstructing_list
 
@@ -174,8 +174,8 @@ def run_with_multiProcess(ptcld_folder, meta_dir, illum_to_disp_ratio, granulari
             calculate_obstructing_omnidegree(ptcld_folder, meta_dir, illum_to_disp_ratio, k, shape, granularity)
 
 
-def prevent_obstructions(ptcld_folder, meta_direc, ratio, k, shape, granularity, obstructing_maps=None):
-    output_path = f"{meta_direc}/obstructing/Q{ratio}/K{k}"
+def prevent_obstructions(ptcld_folder, meta_direc, ratio, G, shape, granularity, obstructing_maps=None):
+    output_path = f"{meta_direc}/obstructing/Q{ratio}/G{G}"
 
     txt_file = f"{shape}.txt"
     standby_file = f"{shape}_standby.txt"
@@ -209,7 +209,7 @@ def prevent_obstructions(ptcld_folder, meta_direc, ratio, k, shape, granularity,
         standbys = new_obs_stb_coords
         # print(standbys)
 
-        move_back_path = f"{meta_dir}/obstructing/Q{ratio}/K{k}"
+        move_back_path = f"{meta_dir}/obstructing/Q{ratio}/G{G}"
         os.makedirs(move_back_path+"/points", exist_ok=True)
         np.savetxt(f'{move_back_path}/points/{shape}_back_standby.txt', standbys, fmt='%d', delimiter=' ')
 
@@ -252,15 +252,15 @@ if __name__ == "__main__":
 
 
     # Select these base on the group formation you have, see '../assets/pointclouds'
-    k_list = [3, 20]  # This is the size of group constructed by the group formation technique that you would like to test.
+    G_list = [3, 20]  # This is the size of group constructed by the group formation technique that you would like to test.
     shape_list = ["skateboard", "dragon", "hat"]  # This is the list of shape to run this on
 
     for illum_to_disp_ratio in Q_list:
-        for k in k_list:
+        for G in G_list:
             for shape in shape_list:
-                calculate_obstructing_omnidegree(ptcld_folder, meta_dir, illum_to_disp_ratio, k, shape, granularity)
+                calculate_obstructing_omnidegree(ptcld_folder, meta_dir, illum_to_disp_ratio, G, shape, granularity)
 
     for illum_to_disp_ratio in Q_list:
-        for k in k_list:
+        for G in G_list:
             for shape in shape_list:
-                prevent_obstructions(ptcld_folder, meta_dir, illum_to_disp_ratio, k, shape, granularity)
+                prevent_obstructions(ptcld_folder, meta_dir, illum_to_disp_ratio, G, shape, granularity)

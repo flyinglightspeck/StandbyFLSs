@@ -80,14 +80,14 @@ def read_coordinates(file_path, delimeter=' ', type=0):
         return None
 
 
-def get_standby_coords(groups, K):
+def get_standby_coords(groups, G):
     group_standby_coord = []
 
     for i in range(len(groups)):
 
         group = groups[i]
 
-        if K:
+        if G:
             member_count = group.shape[0]
             sum_x = np.sum(group[:, 0])
             sum_y = np.sum(group[:, 1])
@@ -240,14 +240,14 @@ def check_visible_cell(user_eye, points, ratio):
     return np.array(visible), np.array(blocking), np.array(blocked), np.unique(blocking_index)
 
 
-def get_points(shape, K, file_folder, ratio):
-    input_file = f"{shape}_G{K}.xlsx"
+def get_points(shape, G, file_folder, ratio):
+    input_file = f"{shape}_G{G}.xlsx"
 
     txt_file = f"{shape}.txt"
 
     groups = read_cliques_xlsx(f"{file_folder}/{input_file}", ratio)
 
-    group_standby_coord = get_standby_coords(groups, K)
+    group_standby_coord = get_standby_coords(groups, G)
 
     points = read_coordinates(f"{file_folder}/{txt_file}")
 
@@ -312,8 +312,8 @@ def get_points(shape, K, file_folder, ratio):
     return points, point_boundary, np.array(standbys), check_times
 
 
-def calculate_single_view(shape, k, ratio, view, points, camera, output_path):
-    print(f"START: {shape}, K: {k}, Ratio: {ratio} ,{view}")
+def calculate_single_view(shape, G, ratio, view, points, camera, output_path):
+    print(f"START: {shape}, G: {G}, Ratio: {ratio} ,{view}")
 
     visible, blocking, blocked_by, blocking_index = check_visible_cell(camera, points, ratio)
 
@@ -348,15 +348,15 @@ def calculate_single_view(shape, k, ratio, view, points, camera, output_path):
                delimiter=' ')
 
     print(
-        f"{shape}, K: {k}, Ratio: {ratio} ,{view} view: Number of Illuminating FLS: {len(visible_illum)}, Visible Standby FLS: {len(visible_standby)},  Obstructing Number: {len(blocking_index)}")
+        f"{shape}, G: {G}, Ratio: {ratio} ,{view} view: Number of Illuminating FLS: {len(visible_illum)}, Visible Standby FLS: {len(visible_standby)},  Obstructing Number: {len(blocking_index)}")
 
-    metric = [shape, k, ratio, view, len(visible_illum), len(blocking_index)]
+    metric = [shape, G, ratio, view, len(visible_illum), len(blocking_index)]
     return metric
 
 
-def calculate_obstructing(group_file, meta_direc, ratio, k, shape):
+def calculate_obstructing(group_file, meta_direc, ratio, G, shape):
     result = [
-        ["Shape", "K", "Ratio", "View", "Visible_Illum", "Obstructing FLS", "Min Times Checked",
+        ["Shape", "G", "Ratio", "View", "Visible_Illum", "Obstructing FLS", "Min Times Checked",
          "Mean Times Checked",
          "Max Times Checked"]]
 
@@ -364,11 +364,11 @@ def calculate_obstructing(group_file, meta_direc, ratio, k, shape):
     if not os.path.exists(report_path):
         os.makedirs(report_path, exist_ok=True)
 
-    output_path = f"{meta_direc}/obstructing/Q{ratio}/K{k}"
+    output_path = f"{meta_direc}/obstructing/Q{ratio}/G{G}"
     if not os.path.exists(output_path):
         os.makedirs(output_path, exist_ok=True)
 
-    points, boundary, standbys, check_times = get_points(shape, k, file_folder, ratio)
+    points, boundary, standbys, check_times = get_points(shape, G, file_folder, ratio)
 
     # points, boundary, standbys = get_points_from_file(ratio, group_file, output_path, f"{shape}.txt", f"{shape}_standby.txt")
     # check_times = [0]
@@ -414,7 +414,7 @@ def calculate_obstructing(group_file, meta_direc, ratio, k, shape):
 
     for i in range(len(views)):
 
-        print(f"START: {shape}, K: {k}, Ratio: {ratio} ,{views[i]}")
+        print(f"START: {shape}, G: {G}, Ratio: {ratio} ,{views[i]}")
 
         camera = cam_positions[i]
 
@@ -451,13 +451,13 @@ def calculate_obstructing(group_file, meta_direc, ratio, k, shape):
                    delimiter=' ')
 
         print(
-            f"{shape}, K: {k}, Ratio: {ratio} ,{views[i]} view: Number of Illuminating FLS: {len(visible_illum)}, Visible Standby FLS: {len(visible_standby)},  Obstructing Number: {len(blocking_index)}")
+            f"{shape}, G: {G}, Ratio: {ratio} ,{views[i]} view: Number of Illuminating FLS: {len(visible_illum)}, Visible Standby FLS: {len(visible_standby)},  Obstructing Number: {len(blocking_index)}")
 
         result.append(
-            [shape, k, ratio, views[i], len(visible_illum), len(blocking_index), min(check_times),
+            [shape, G, ratio, views[i], len(visible_illum), len(blocking_index), min(check_times),
              statistics.mean(check_times), max(check_times)])
 
-    with open(f'{report_path}/report_Q{ratio}_K{k}_{shape}.csv', mode='w', newline='') as file:
+    with open(f'{report_path}/report_Q{ratio}_G{G}_{shape}.csv', mode='w', newline='') as file:
         writer = csv.writer(file)
 
         # Write the data from the list to the CSV file
@@ -473,10 +473,10 @@ if __name__ == "__main__":
     Q_list = [1, 3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.
 
     # Select these base on the group formation you have, see '../assets/pointclouds'
-    k_list = [3, 20]  # This is the size of group constructed by the group formation technique that you would like to test.
+    G_list = [3, 20]  # This is the size of group constructed by the group formation technique that you would like to test.
     shape_list = ["skateboard", "dragon", "hat"]  # This is the list of shape to run this on
 
     for illum_to_disp_ratio in Q_list:
-        for k in k_list:
+        for G in G_list:
             for shape in shape_list:
-                calculate_obstructing(file_folder, meta_dir, illum_to_disp_ratio, k, shape)
+                calculate_obstructing(file_folder, meta_dir, illum_to_disp_ratio, G, shape)

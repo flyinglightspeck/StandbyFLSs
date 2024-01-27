@@ -79,31 +79,31 @@ def init(ax):
     # return line1,
 
 
-def update(frame):
-    t = start_time + frame * frame_rate
-    while len(filtered_events):
-        # print(t)
-        event_time = filtered_events[0][0]
-        if event_time <= t:
-            event = filtered_events.pop(0)
-            event_type = event[1]
-            fls_id = event[-1]
-            if event_type == TimelineEvents.ILLUMINATE or event_type == TimelineEvents.ILLUMINATE_STANDBY:
-                points[fls_id] = event[2]
-            else:
-                points.pop(fls_id)
-        else:
-            t += frame_rate
-            break
-    coords = points.values()
-    ax.clear()
-    xs = [c[0] for c in coords]
-    ys = [c[1] for c in coords]
-    zs = [c[2] for c in coords]
-    ln = ax.scatter(xs, ys, zs, c='blue', s=2, alpha=1)
-    set_axis(ax, length, width, height)
-    set_text(tx, t, total_points - len(coords))
-    return ln,
+# def update(frame):
+#     t = start_time + frame * frame_rate
+#     while len(filtered_events):
+#         # print(t)
+#         event_time = filtered_events[0][0]
+#         if event_time <= t:
+#             event = filtered_events.pop(0)
+#             event_type = event[1]
+#             fls_id = event[-1]
+#             if event_type == TimelineEvents.ILLUMINATE or event_type == TimelineEvents.ILLUMINATE_STANDBY:
+#                 points[fls_id] = event[2]
+#             else:
+#                 points.pop(fls_id)
+#         else:
+#             t += frame_rate
+#             break
+#     coords = points.values()
+#     ax.clear()
+#     xs = [c[0] for c in coords]
+#     ys = [c[1] for c in coords]
+#     zs = [c[2] for c in coords]
+#     ln = ax.scatter(xs, ys, zs, c='blue', s=2, alpha=1)
+#     set_axis(ax, length, width, height)
+#     set_text(tx, t, total_points - len(coords))
+#     return ln,
 
 
 def show_last_frame(events, t=30):

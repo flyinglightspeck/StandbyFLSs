@@ -6,15 +6,15 @@ from obstructing_detection import calculate_single_view, get_points_from_file
 import multiprocessing as mp
 
 
-def solve_all_views(group_file, meta_direc, ratio, k, shape):
+def solve_all_views(group_file, meta_direc, ratio, G, shape):
 
-    print(f"{shape}, R={ratio}, K={k}")
+    print(f"{shape}, Q={ratio}, G={G}")
 
     result_find = [
-        ["Shape", "K", "Ratio", "View", "Visible_Illum", "Obstructing FLS"]]
+        ["Shape", "G", "Ratio", "View", "Visible_Illum", "Obstructing FLS"]]
 
     result_solve = [[
-        "Shape", "K", "Ratio", "View",
+        "Shape", "G", "Ratio", "View",
         "Min Dist Illum", "Max Dist Illum", "Avg Dist Illum",
         "Min Dist Standby", "Max Dist Standby", "Avg Dist Standby",
         "Moved Illuminating FLSs",
@@ -28,7 +28,7 @@ def solve_all_views(group_file, meta_direc, ratio, k, shape):
     if not os.path.exists(report_path):
         os.makedirs(report_path, exist_ok=True)
 
-    output_path = f"{meta_direc}/obstructing/Q{ratio}/K{k}"
+    output_path = f"{meta_direc}/obstructing/Q{ratio}/G{G}"
     if not os.path.exists(output_path):
         os.makedirs(output_path, exist_ok=True)
 
@@ -69,10 +69,10 @@ def solve_all_views(group_file, meta_direc, ratio, k, shape):
         standby_file = f"{shape}_{views[i-1]}_standby.txt" if i > 1 else f"{shape}_back_standby.txt"
         points, boundary, standbys = get_points_from_file(ratio, group_file, output_path, txt_file, standby_file)
 
-        metrics_find = calculate_single_view(shape, k, ratio, view, points, user_eye, output_path)
+        metrics_find = calculate_single_view(shape, G, ratio, view, points, user_eye, output_path)
         result_find.append(metrics_find)
 
-        metrics_solve = solve_single_view(shape, k, ratio, view, "_" + views[i - 1] if i > 1 else "_back", user_eye,
+        metrics_solve = solve_single_view(shape, G, ratio, view, "_" + views[i - 1] if i > 1 else "_back", user_eye,
                                           group_file, output_path)
 
         print(metrics_solve)
@@ -80,14 +80,14 @@ def solve_all_views(group_file, meta_direc, ratio, k, shape):
         result_solve.append(metrics_solve)
 
 
-    with open(f'{report_path}/report_detect_Q{ratio}_K{k}_{shape}_sec.csv', mode='w', newline='') as file:
+    with open(f'{report_path}/report_detect_Q{ratio}_G{G}_{shape}_sec.csv', mode='w', newline='') as file:
         writer = csv.writer(file)
 
         # Write the data from the list to the CSV file
         for row in result_find:
             writer.writerow(row)
 
-    with open(f'{report_path}/report_solve_Q{ratio}_K{k}_{shape}_sec.csv', mode='w', newline='') as file:
+    with open(f'{report_path}/report_solve_Q{ratio}_G{G}_{shape}_sec.csv', mode='w', newline='') as file:
         writer = csv.writer(file)
 
         # Write the data from the list to the CSV file
@@ -104,10 +104,10 @@ if __name__ == "__main__":
     Q_list = [1, 3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.
 
     # Select these base on the group formation you have, see '../assets/pointclouds'
-    k_list = [3, 20]  # This is the size of group constructed by the group formation technique that you would like to test.
+    G_list = [3, 20]  # This is the size of group constructed by the group formation technique that you would like to test.
     shape_list = ["skateboard", "dragon", "hat"]  # This is the list of shape to run this on
 
     for illum_to_disp_ratio in Q_list:
-        for k in k_list:
+        for G in G_list:
             for shape in shape_list:
-                solve_all_views(file_folder, meta_dir, illum_to_disp_ratio, k, shape)
+                solve_all_views(file_folder, meta_dir, illum_to_disp_ratio, G, shape)

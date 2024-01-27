@@ -1,10 +1,10 @@
 class TestConfig:
     ENABLED = False
     NUMBER_OF_FLSS = 165
-    K = 11
-    R = 10
+    G = 11
+    Q = 10
     H = 'vns'
-    ETA = K-1
-    ETA_STR = 'K-1'
-    FILE_NAME_KEYS = ['H', 'K', 'R']
+    ETA = G-1
+    ETA_STR = 'G-1'
+    FILE_NAME_KEYS = ['H', 'G', 'Q']
     DIR_KEYS = ['H']

@@ -753,11 +753,11 @@ if __name__ == "__main__":
 
     name = "skateboard_D1_R3000_T60_S30_PTrue"
 
-    for k in [0, 3, 20]:
-        folder_path = f"DIRECTORY/K{k}/{name}"
+    for G in [0, 3, 20]:
+        folder_path = f"DIRECTORY/G{G}/{name}"
         input_file = f"flss.csv"
 
-        print(f"=================K{k}=================")
+        print(f"=================G{G}=================")
 
         df = pd.read_csv(os.path.join(folder_path, input_file))
 
@@ -812,40 +812,3 @@ if __name__ == "__main__":
         dists = df['26_dist_traveled']
         print(f"Total Avg Dist:{sum(dists)/len(dists)}, num: {len(dists)}")
         print(f"Diff Type num sum: {len(arrived_illum) + len(midflight_failed_illum) + len(midflight) + len(midflight_standby_recovered) +len(stationary_standby_recovered) + len(standby_failed) + len(standby_stationary)}")
-
-    # with open('K0_charts_skateboard_D1_R20_T30_S6_F1.json', 'r') as json_file:
-    #     function_of_time = json.load(json_file)
-    #
-    # # fig, ax = plt.subplots()
-    # # df_I = pd.DataFrame()
-    # # df_I['Time'] = function_of_time['illuminating']['t']
-    # # df_I['Value'] = function_of_time['illuminating']['y']
-    #
-    #
-    # df_F = pd.DataFrame()
-    # df_F['Time'] = function_of_time['failed']['t']
-    # df_F['Value'] = function_of_time['failed']['y']
-    #
-    # rate = []
-    # fail_per_sec = 0
-    # time_index = 250
-    # for i in range(len(df_F['Value'])):
-    #     if df_F['Time'][i] > 250:
-    #         if df_F['Time'][i] < time_index + 1:
-    #             fail_per_sec += 1
-    #         else:
-    #             rate.append(fail_per_sec)
-    #             time_index += 1
-    #             fail_per_sec=0
-    #
-    # a = sum(rate)/len(rate)
-    #
-    # print(a)
-
-    # df_I.plot(x='Time', y='Value', kind='line', ax=ax, label="Illuminating", linewidth=2)
-    # df_F.plot(x='Time', y='Value', kind='line', ax=ax, label="Failed", linewidth=2)
-    #
-    # plt.ylim(0, 3000)
-    # plt.xlim(left=0)
-    # plt.legend()
-    # plt.show()

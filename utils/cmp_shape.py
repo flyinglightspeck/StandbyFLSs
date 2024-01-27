@@ -502,9 +502,9 @@ if __name__ == '__main__':
 
             time_to_travel_center_list = [[], [], [], []]
 
-            for i, K in enumerate([3, 5, 10, 20]):
+            for i, G in enumerate([3, 5, 10, 20]):
 
-                file_path = shape + "_" + group_type + str(K) + ".xlsx"
+                file_path = shape + "_" + group_type + str(G) + ".xlsx"
                 print(file_path)
 
                 file_path = "../assets/pointcloud/" + file_path
@@ -541,7 +541,7 @@ if __name__ == '__main__':
 
                 avg_mttr = calculate_travel_time(max_speed, max_acceleration, max_deceleration,
                                                  dists[0] * disp_cell_size)
-                report = [shape, group_name, str(K), avg_pairwise_dist, avg_centroid_dist]
+                report = [shape, group_name, str(G), avg_pairwise_dist, avg_centroid_dist]
 
                 group_sizes = get_groupsize_list(file_path)
                 group_sizes.sort()
@@ -590,7 +590,7 @@ if __name__ == '__main__':
 
                 # print(group_sizes)
 
-                draw_histogram(group_sizes, shape + "_" + group_name + str(K) + "_groupsizehist.png")
+                draw_histogram(group_sizes, shape + "_" + group_name + str(G) + "_groupsizehist.png")
 
             # print(f"Length of List: {len(mttr_list)}")
             mttr_groupsize_plot(mttr_list, [3, 5, 10, 20], f"{shape}_{group_name}_MTTR.png")

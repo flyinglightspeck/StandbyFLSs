@@ -10,7 +10,6 @@ from abc import ABC, abstractmethod
 import numpy as np
 import psutil
 
-from animation import draw_last_frame
 from dispatcher import Dispatcher
 from test_config import TestConfig
 from config import Config
@@ -272,7 +271,7 @@ class PrimaryNode:
             height = Config.STANDBY_TEST_CONFIG[1][1]
             radius = Config.STANDBY_TEST_CONFIG[0][1]
             self.center = [radius + 1, radius + 1, 0]
-            self.groups = generate_circle_coordinates(self.center, radius, height, Config.K)
+            self.groups = generate_circle_coordinates(self.center, radius, height, Config.G)
             self.radio_ranges = [Config.MAX_RANGE] * len(self.groups)
 
         if Config.DEBUG and Config.SANITY_TEST == 0:
@@ -384,7 +383,7 @@ class PrimaryNode:
             self.group_standby_coord[group_id] = None
             self.group_standby_id[group_id] = None
 
-            if Config.K:
+            if Config.G:
                 member_count = group.shape[0]
                 sum_x = np.sum(group[:, 0])
                 sum_y = np.sum(group[:, 1])
@@ -416,7 +415,7 @@ class PrimaryNode:
                 continue
 
             # deploy standby
-            if Config.K:
+            if Config.G:
                 self.pid += 1
                 fls = {
                     "fid": self.pid,
@@ -594,7 +593,7 @@ class PrimaryNode:
             else:
                 cur_midflight = 1 if t % Config.STANDBY_TEST_CONFIG[2][1] >= experiment_result[4] else 0
                 num_midflight += cur_midflight
-                num_illuminate += num_illuminating(Config.K, cur_midflight)
+                num_illuminate += num_illuminating(Config.G, cur_midflight)
 
         if Config.SANITY_TEST == 1:
             num_midflight /= len(
@@ -645,7 +644,7 @@ class PrimaryNode:
                 group_num = 0
 
             elif Config.SANITY_TEST == 3:
-                total_point_num = Config.K
+                total_point_num = Config.G
                 group_num = 1
             elif Config.DEBUG:
                 total_point_num = len(self.groups) * len(self.groups[0])
@@ -664,7 +663,7 @@ class PrimaryNode:
                 # total_point_num, group_num = read_point_info_from_cliques_xlsx(
                 #     os.path.join(self.dir_experiment, f'{Config.INPUT}.xlsx'))
 
-                if Config.K == 0:
+                if Config.G == 0:
                     group_num = 0
             # reset after all initial illumination FLSs and initial Standby FLSs were dispatched
             # initial_fls_num = total_point_num + group_num
@@ -756,7 +755,7 @@ class PrimaryNode:
 #
 #         utils.combine_csvs(dir_meta, dir_experiment, "reli_" + result_name)
 #
-#         folder_name = f"{CONFIG.DIR_KEYS[0]}{CONFIG.K}"
+#         folder_name = f"{CONFIG.DIR_KEYS[0]}{Config.G}"
 #
 #         target_file_path = '~/Desktop/report/' + folder_name
 #
@@ -770,7 +769,7 @@ class PrimaryNode:
 #                 group_num = 0
 #
 #             elif Config.SANITY_TEST == 3:
-#                 total_point_num = Config.K
+#                 total_point_num = Config.G
 #                 group_num = 1
 #
 #             else:

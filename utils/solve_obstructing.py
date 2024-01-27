@@ -32,8 +32,8 @@ def calculate_travel_time(max_speed, max_acceleration, max_deceleration, distanc
     return t_total
 
 
-def get_dist_to_centroid(standbys, shape, k, file_folder, ratio):
-    input_file = f"{shape}_G{k}.xlsx"
+def get_dist_to_centroid(standbys, shape, G, file_folder, ratio):
+    input_file = f"{shape}_G{G}.xlsx"
 
     groups = read_cliques_xlsx(f"{file_folder}/{input_file}", ratio)
 
@@ -47,8 +47,8 @@ def get_dist_to_centroid(standbys, shape, k, file_folder, ratio):
     return dists
 
 
-def dist_to_move_all(standbys, shape, k, file_folder, ratio):
-    input_file = f"{shape}_G{k}.xlsx"
+def dist_to_move_all(standbys, shape, G, file_folder, ratio):
+    input_file = f"{shape}_G{G}.xlsx"
 
     groups = read_cliques_xlsx(f"{file_folder}/{input_file}", ratio)
 
@@ -62,15 +62,15 @@ def dist_to_move_all(standbys, shape, k, file_folder, ratio):
     return avg_dists
 
 
-def solve_single_view(shape, k, ratio, view, lastview, user_eye, group_file, output_path, test=False, file_surfix="standby"):
-    tag = f"Solving: {shape}, K: {k}, Ratio: {ratio} ,{view}"
+def solve_single_view(shape, G, ratio, view, lastview, user_eye, group_file, output_path, test=False, file_surfix="standby"):
+    tag = f"Solving: {shape}, G: {G}, Ratio: {ratio} ,{view}"
     print(tag)
 
     txt_file = f"{shape}.txt"
     standby_file = f"{shape}{lastview}_standby.txt"
     points, boundary, standbys = get_points_from_file(ratio, group_file, output_path, txt_file, standby_file)
     if not test:
-        ori_dists_center = get_dist_to_centroid(standbys[:, 0:3], shape, k, group_file, ratio)
+        ori_dists_center = get_dist_to_centroid(standbys[:, 0:3], shape, G, group_file, ratio)
     else:
         ori_dists_center = [0]
 
@@ -83,7 +83,7 @@ def solve_single_view(shape, k, ratio, view, lastview, user_eye, group_file, out
 
     if len(obstructing) == 0:
         np.savetxt(f'{output_path}/points/{shape}_{view}_standby.txt', standbys, fmt='%f', delimiter=' ')
-        metrics = [shape, k, ratio, view, 0, 0, 0,
+        metrics = [shape, G, ratio, view, 0, 0, 0,
                    0, 0, 0,
                    0, 0, 0,
                    0, 0, 0,
@@ -221,7 +221,7 @@ def solve_single_view(shape, k, ratio, view, lastview, user_eye, group_file, out
     np.savetxt(f'{output_path}/points/{shape}_{view}_{file_surfix}.txt', standbys, fmt='%f', delimiter=' ')
 
     if not test:
-        dists_center = get_dist_to_centroid(standbys[:, 0:3], shape, k, group_file, ratio)
+        dists_center = get_dist_to_centroid(standbys[:, 0:3], shape, G, group_file, ratio)
     else:
         dists_center = [0]
 
@@ -230,7 +230,7 @@ def solve_single_view(shape, k, ratio, view, lastview, user_eye, group_file, out
     dist_illum_list = list(dist_illum.values())
     dist_standby_list = list(dist_standby.values())
 
-    metrics = [shape, k, ratio, view,
+    metrics = [shape, G, ratio, view,
                min(dist_illum_list), max(dist_illum_list), statistics.mean(dist_illum_list),
                min(dist_standby_list), max(dist_standby_list), statistics.mean(dist_standby_list),
                len(obstruct_pairs.values()),
@@ -252,9 +252,9 @@ def solve_single_view(shape, k, ratio, view, lastview, user_eye, group_file, out
     return metrics
 
 
-def solve_obstructing(group_file, meta_direc, ratio, k_list, shape_list):
+def solve_obstructing(group_file, meta_direc, ratio, G_list, shape_list):
     title = [
-        "Shape", "K", "Ratio", "View",
+        "Shape", "G", "Ratio", "View",
         "Min Dist Illum", "Max Dist Illum", "Avg Dist Illum",
         "Min Dist Standby", "Max Dist Standby", "Avg Dist Standby",
         "Moved Illuminating FLSs",
@@ -265,12 +265,12 @@ def solve_obstructing(group_file, meta_direc, ratio, k_list, shape_list):
         "Dist To Center Change", "MTID Change", "Obstructing Nums"]
     result = [title]
 
-    for k in k_list:
+    for G in G_list:
         report_path = f"{meta_direc}/obstructing/Q{ratio}"
         if not os.path.exists(report_path):
             os.makedirs(report_path, exist_ok=True)
 
-        output_path = f"{meta_direc}/obstructing/Q{ratio}/K{k}"
+        output_path = f"{meta_direc}/obstructing/Q{ratio}/G{G}"
         if not os.path.exists(output_path):
             os.makedirs(output_path, exist_ok=True)
 
@@ -309,7 +309,7 @@ def solve_obstructing(group_file, meta_direc, ratio, k_list, shape_list):
                 view = views[i]
                 user_eye = eye_positions[i]
                 lastview = ""
-                metrics = solve_single_view(shape, k, ratio, view, lastview, user_eye, group_file, output_path,
+                metrics = solve_single_view(shape, G, ratio, view, lastview, user_eye, group_file, output_path,
                                             test=False)
                 print(list(zip(title, metrics)))
                 result.append(metrics)

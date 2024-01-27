@@ -12,14 +12,14 @@ class Config:
     MAX_SPEED = 3
     DISPLAY_CELL_SIZE = 0.05
     BUSY_WAITING = False
-    DURATION = 60 * 10
-    K = 3 # if k = 0 no standbys are deployed
+    DURATION = 60 * 1
+    G = 3 # if G = 0 no standbys are deployed
     SHAPE = 'chess'
     RESULTS_PATH = 'results'
     DEBUG = True
     FILE_NAME_KEYS = [('DISPATCHERS', 'D'), ('DISPATCH_RATE', 'R'), ('FAILURE_TIMEOUT', 'T'), ('MAX_SPEED', 'S'),
                       ('SANITY_TEST', 'test')]
-    DIR_KEYS = ['K']
+    DIR_KEYS = ['G']
     SERVER_TIMEOUT = 120
     PROCESS_JOIN_TIMEOUT = 120
     DISPATCHERS = 1  # valid values 1 3 5

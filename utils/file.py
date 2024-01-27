@@ -197,14 +197,14 @@ def combine_xlsx(directory):
         for file in sorted(xlsx_files):
             print(file)
             df = pd.read_excel(file, sheet_name='metrics')
-            m = re.search(r'K:(\d+)_R:(\d+)', file)
-            k = m.group(1)
-            r = m.group(2)
+            m = re.search(r'G:(\d+)_Q:(\d+)', file)
+            g = m.group(1)
+            q = m.group(2)
 
-            df2 = pd.DataFrame([k, r])
+            df2 = pd.DataFrame([g, q])
             df3 = pd.concat([df2, df.value])
             dfs.append(df3)
-        pd.concat([pd.concat([pd.DataFrame(['k', 'r']), df.metric])] + dfs, axis=1).to_excel(writer, index=False)
+        pd.concat([pd.concat([pd.DataFrame(['g', 'q']), df.metric])] + dfs, axis=1).to_excel(writer, index=False)
 
 
 def read_cliques_xlsx(path):
@@ -225,13 +225,13 @@ def read_point_info_from_cliques_xlsx(path):
     group_num = filtered_row['value'].iloc[0]
     group_num = int(group_num)
     filtered_row = df[df['metric'] == 'number of single nodes']
-    if Config.K == 0:
+    if Config.G == 0:
         total_point_num = group_num * 3 + int(filtered_row['value'].iloc[0])
 
         # logger.info(f"total illum num: {total_point_num}")
         group_num = 0
     else:
-        total_point_num = group_num * Config.K + int(filtered_row['value'].iloc[0])
+        total_point_num = group_num * Config.G + int(filtered_row['value'].iloc[0])
 
     # Get the value from the 'Value' column for the filtered row
     # logger.info(f"INITIAL ILLUM NUM {total_point_num} TYPE={type(total_point_num)}")
@@ -357,9 +357,3 @@ if __name__ == "__main__":
     else:
         dir_in, dir_out, name = "../results/butterfly/H:2/1687746648", "../results/butterfly/H:2", "agg"
     create_csv_from_json(dir_in, 0)
-    # combine_csvs(dir_in, dir_out, name)
-    # print(f"usage: {sys.argv[0]} <input_dir> <output_dir> <xlsx_file_name>")
-    # combine_xlsx("results/1/results/racecar/H:2/20-Jun-08_52_06")
-    # combine_xlsx("/Users/hamed/Desktop/165-point_64-core/H:rs_ETA_STR:K-1")
-    # combine_xlsx("/Users/hamed/Desktop/165-point_64-core/H:rs_ETA_STR:K")
-    # combine_xlsx("/Users/hamed/Desktop/165-point_64-core/H:rs_ETA_STR:1.5K")

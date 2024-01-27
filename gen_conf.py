@@ -17,7 +17,7 @@ def_general_conf = {
     "DISPLAY_CELL_SIZE": "0.05",
     "BUSY_WAITING": "False",
     "DURATION": "60 * 30",
-    "K": "3",
+    "G": "3",
     "SHAPE": "'chess'",
     "RESULTS_PATH": "'/proj/nova-PG0/shuqin/results/'",
     "DEBUG": "False",
@@ -26,7 +26,7 @@ def_general_conf = {
     # "('NAME', 'N')]",
     #                   "('DISPATCHER_ASSIGN_POLICY', 'P')]",
     # "]",
-    "DIR_KEYS": "['K']",
+    "DIR_KEYS": "['G']",
     "SERVER_TIMEOUT": "120",
     "PROCESS_JOIN_TIMEOUT": "120",
     "DISPATCHERS": "1",
@@ -46,11 +46,11 @@ def_general_conf = {
 
 general_props = [
     {
-        "keys": ["K", "INPUT", "SHAPE"],
+        "keys": ["G", "INPUT", "SHAPE"],
         "values": [
-            {"K": "0", "INPUT": "'bucket_face_G3'", "SHAPE": "'bucket_face'"},
-            {"K": "3", "INPUT": "'bucket_face_G3'", "SHAPE": "'bucket_face'"},
-            {"K": "20", "INPUT": "'bucket_face_G20'", "SHAPE": "'bucket_face'"},
+            {"G": "0", "INPUT": "'bucket_face_G3'", "SHAPE": "'bucket_face'"},
+            {"G": "3", "INPUT": "'bucket_face_G3'", "SHAPE": "'bucket_face'"},
+            {"G": "20", "INPUT": "'bucket_face_G20'", "SHAPE": "'bucket_face'"},
         ]
     },
     {
@@ -77,25 +77,6 @@ general_props = [
         "keys": ["DURATION"],
         "values": ["60 * 30"]
     },
-    # {
-    #     "keys": ["K", "INPUT", "DISPATCHERS", "SHAPE"],
-    #     "values": [
-    #         # {"K": "0", "INPUT": "'skateboard_G3'", "DISPATCHERS": "1", "SHAPE": "'skateboard'"},
-    #         # {"K": "3", "INPUT": "'skateboard_G3'", "DISPATCHERS": "1", "SHAPE": "'skateboard'"},
-    #         # # {"K": "5", "INPUT": "'skateboard_G5'", "DISPATCHERS": "1", "SHAPE": "'skateboard'"},
-    #         # # {"K": "10", "INPUT": "'skateboard_G10'", "DISPATCHERS": "1", "SHAPE": "'skateboard'"},
-    #         # # {"K": "15", "INPUT": "'skateboard_G15'", "DISPATCHERS": "1", "SHAPE": "'skateboard'"},
-    #         # {"K": "20", "INPUT": "'skateboard_G20'", "DISPATCHERS": "1", "SHAPE": "'skateboard'"},
-    #
-    #         # {"K": "0", "INPUT": "'dragon_G3'", "DISPATCHERS": "1", "SHAPE": "'dragon'"},
-    #         # {"K": "3", "INPUT": "'dragon_G3'", "DISPATCHERS": "1", "SHAPE": "'dragon'"},
-    #         # {"K": "5", "INPUT": "'dragon_G5'", "DISPATCHERS": "1", "SHAPE": "'dragon'"},
-    #         # {"K": "10", "INPUT": "'dragon_G10'", "DISPATCHERS": "1", "SHAPE": "'dragon'"},
-    #         # {"K": "15", "INPUT": "'dragon_G15'", "DISPATCHERS": "1", "SHAPE": "'dragon'"},
-    #         {"K": "20", "INPUT": "'dragon_G20'", "DISPATCHERS": "1", "SHAPE": "'dragon'"},
-    #     ]
-    # },
-
     {
         "keys": ["PRIORITIZE_ILLUMINATING_FLS"],
         "values": ["True"]
