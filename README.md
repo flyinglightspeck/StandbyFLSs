@@ -7,7 +7,7 @@ Authors:  Hamed Alimohammadzadeh(halimoha@usc.edu), Shuqin Zhu (shuqinzh@usc.edu
    * Two failure models for an FLS:  RandTTL and BetaTTL.
    * Fix-sized reliability groups consisting of G illuminating FLSs and 1 standby FLSs.
    * Mean Time to Illuminate a Dark (MTID) point after an FLS fails.  
-   * A configurable simulation model to quantify the Quality of Illumination (QoI) as a function of time for a point cloud.  Each FLS is modeled as a process.
+   * A configurable simulation model to quantify the Quality of Illumination (QoI) as a function of time for a point cloud.  Each FLS is modeled as a process.  With large point cloudes (FLSs), the simulator scales horizontally to run across multiple servers.
 
 # Limitations
 
