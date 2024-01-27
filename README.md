@@ -1,6 +1,6 @@
 This repository contains software that models deployment and failure handling of FLSs using standbys.
 
-Authors:  Hamed Alimohammadzadeh(halimoha@usc.edu), Shuqin Zhu (shuqinzh@usc.edu) and Shahram Ghandeharizadeh (shahram@usc.edu)
+Authors:  Hamed Alimohammadzadeh(halimoha@usc.edu), Shuqin Zhu (shuqinzh@usc.edu), and Shahram Ghandeharizadeh (shahram@usc.edu)
 
 # Features
    * Velocity model of an FLS consisting of acceleration, deceleration, and speed components.
