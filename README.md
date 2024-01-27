@@ -3,8 +3,8 @@ This repository contains software that models deployment and failure handling of
 Authors:  Hamed Alimohammadzadeh(halimoha@usc.edu), Shuqin Zhu (shuqinzh@usc.edu), and Shahram Ghandeharizadeh (shahram@usc.edu)
 
 # Features
-   * Velocity model of an FLS consisting of acceleration, deceleration, and speed.
-   * Two failure models for an FLS:  RandTTL and BetaTTL.
+   * An FLS velocity model consisting of adjustable acceleration, deceleration, and speed parameters.
+   * Two FLS failure models:  RandTTL using a uniform distribution and BetaTTL using a skewed distribution.
    * Fix-sized reliability groups consisting of G illuminating FLSs and 1 standby FLSs.
    * Mean Time to Illuminate a Dark (MTID) point after an illuminating FLS fails.  
    * Both illuminating and standby FLSs may fail either mid-flight to their destination or once at their destination.
@@ -13,18 +13,19 @@ Authors:  Hamed Alimohammadzadeh(halimoha@usc.edu), Shuqin Zhu (shuqinzh@usc.edu
 # Limitations
    * In general, a reliability group may consist of C standby FLSs.  The current implmentation supports C=1 only.
 
-# Standby FLSs for FLS Illumination
-
-## Python Version
-This software was developed based on Python 3.9.0
-
-## Clone
+# Clone
 ``git clone https://github.com/flslab/FailureHandling.git``
 
-## Running using Venv
+# Standby FLSs for FLS Illumination
 
-You can use the `setup_venv.sh` script to create and activate a virtual environment or alternatively follow these steps to set it up manually.
-First create a virtual environment using venv. You can use any name instead of env.
+# Running using Venv
+This software was implemented and tested using Python 3.9.0.
+
+We recommend using PyCharm, enabling the software to run across mutliple operating systems, e.g., Windows, MacOS, etc.
+
+Use the `bash setup_venv.sh` to create and activate a virtual environment or alternatively follow these steps to set it up manually.
+First create a virtual environment using venv. 
+You can use any name instead of env.
 
 ```
 cd StandbyFLSs
