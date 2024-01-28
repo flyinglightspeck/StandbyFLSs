@@ -1,3 +1,5 @@
+# Standby Flying Light Specks
+
 This repository contains software that models deployment and failure handling of FLSs using standbys.
 
 Authors:  Hamed Alimohammadzadeh(halimoha@usc.edu), Shuqin Zhu (shuqinzh@usc.edu), and Shahram Ghandeharizadeh (shahram@usc.edu)
@@ -9,9 +11,12 @@ Authors:  Hamed Alimohammadzadeh(halimoha@usc.edu), Shuqin Zhu (shuqinzh@usc.edu
    * Mean Time to Illuminate a Dark (MTID) point after an illuminating FLS fails.  
    * Both illuminating and standby FLSs may fail either mid-flight to their destination or once at their destination.
    * A configurable simulation model to quantify the Quality of Illumination (QoI) as a function of time for a point cloud.  Each FLS is modeled as a process.  With large point cloudes (FLSs), the simulator scales horizontally to run across multiple servers.
+   * Detection of obstructing dark standby FLSs.
+   * Two techniques to eliminate dark standby FLSs from obstructing the user field of view:  Dissolve and Suspend.
 
 # Limitations
    * In general, a reliability group may consist of C standby FLSs.  The current implmentation supports C=1 only.
+   * We consider the field of view of only one user.
 
 # Clone
 ``git clone https://github.com/flslab/FailureHandling.git``
