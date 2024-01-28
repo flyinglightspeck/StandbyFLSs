@@ -8,11 +8,12 @@ Authors:  Hamed Alimohammadzadeh(halimoha@usc.edu), Shuqin Zhu (shuqinzh@usc.edu
    * An FLS velocity model consisting of adjustable acceleration, deceleration, and speed parameters.
    * Two FLS failure models:  RandTTL using a uniform distribution and BetaTTL using a skewed distribution.
    * Fix-sized reliability groups consisting of G illuminating FLSs and 1 standby FLSs.
-   * Mean Time to Illuminate a Dark (MTID) point after an illuminating FLS fails.  
+   * Mean Time to Illuminate a Dark (MTID) point after an illuminating FLS fails.  Visualize results by generating png files in `./assets/figures`.
    * Both illuminating and standby FLSs may fail either mid-flight to their destination or once at their destination.
    * A configurable simulation model to quantify the Quality of Illumination (QoI) as a function of time for a point cloud.  Each FLS is modeled as a process.  With large point cloudes (FLSs), the simulator scales horizontally to run across multiple servers.
    * Detection of obstructing dark standby FLSs.
    * Two techniques to eliminate dark standby FLSs from obstructing the user field of view:  Dissolve and Suspend.
+   * Visualizes results by providing a histogram of the group sizes, box plot of distance from the center of a group to the group members, average distance from a dispatcher to group centroid
 
 # Limitations
    * In general, a reliability group may consist of C standby FLSs.  The current implmentation supports C=1 only.
@@ -20,8 +21,6 @@ Authors:  Hamed Alimohammadzadeh(halimoha@usc.edu), Shuqin Zhu (shuqinzh@usc.edu
 
 # Clone
 ``git clone https://github.com/flslab/FailureHandling.git``
-
-# Standby FLSs for FLS Illumination
 
 # Running using Venv
 This software was implemented and tested using Python 3.9.0.
@@ -59,6 +58,16 @@ Run ``bash setup.sh`` to set up everything.
 If anything went wrong with the bash command, simply run ``pip3 install -r requirements.txt`` in the root directory. If you are using IDE like PyCharm, you can download all the requirements with it.
 We recommend the use of PyCharm for running this software on a single laptop or server for evaluation purposes.
 By installing and using PyCharm, the single server version of software will execute on a wide range of operating systems ranging from macOS to Windows.  
+
+
+# MTID
+Execute `./utils/cmp_shape.py` to compute the MTID for a collection of 3D point clouds (shapes) and reliability groups.  The reliability groups may be computed using an algorithms such as k-Means or CANF.  More formally, `./utils/cmp_shape.py` assumes:
+   * A text file that describes the 3D coordinates of a point cloud.  We provide several point clouds in `./assets/pointcloud`: dragon.txt, hat.txt, and skateboard.txt.  The variable `shapes` defines the point clouds that the program iterates.
+   * A .xlsx file that describes a reliability group computed for a shape using a grouping algorithm with a pre-specified group size.  The name of a file is [shape]_[grouping algorithm]_[group size].xlsx.  `shape` is from the previous bullet, a grouping algorithm, group size is a value such as 3.  In `./assets/pointcloud`, we provide files for the alternative shapes of the previous bullet, K-Means and CANF, and group sizes of {3, 5, 10, 20}.  These files were computed separately and placed in the this `./assets/pointcloud` 
+
+The output of executing `./utils/cmp_shape.py` includes:
+   * `./assets/mtid_report.csv` contains the minimum, median, and maximum MTID.  It also computes other essential stats such as the minum, median, and maximum distance of a standby at the center of a group to each group member. This information is reported for each shape, grouping algorithm, and group size, i.e., a row of the `./assets/mtid_report.csv` file.
+   * `./assets/figures` contains a listing of figures for the different shapes, grouping algorithms, and group sizes.  These figures show MTID, a histogram of group sizes constructed by a grouping algorithm, among others.
 
 
 ## Run Local
