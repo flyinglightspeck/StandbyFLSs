@@ -61,7 +61,7 @@ By installing and using PyCharm, the single server version of software will exec
 
 
 # MTID
-Execute `./utils/cmp_shape.py` to compute the MTID for a collection of 3D point clouds (shapes) and reliability groups.  The reliability groups may be computed using an algorithms such as k-Means or CANF.  More formally, `./utils/cmp_shape.py` assumes:
+The program `./utils/cmp_shape.py` implements analytical models to compute the MTID for a collection of 3D point clouds (shapes) with different reliability groups.  The reliability groups may be computed using an algorithms such as k-Means or CANF.  More formally, `./utils/cmp_shape.py` assumes:
    * A text file that describes the 3D coordinates of a point cloud.  We provide several point clouds in `./assets/pointcloud`: dragon.txt, hat.txt, and skateboard.txt.  The variable `shapes` defines the point clouds that the program iterates.
    * A .xlsx file that describes a reliability group computed for a shape using a grouping algorithm with a pre-specified group size.  The name of a file is [shape]\_[grouping algorithm]\_[group size].xlsx.  `shape` is from the previous bullet, a user specified identifier for a grouping algorithm, e.g., `K` for k-Means, a value for group size, e.g., 3.  In `./assets/pointcloud`, we provide files for the alternative shapes of the previous bullet, K-Means and CANF, and group sizes of {3, 5, 10, 20}.  These files were computed separately and placed in the `./assets/pointcloud` for use by `./utils/cmp_shape.py`.
 
