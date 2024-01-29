@@ -1,15 +1,35 @@
-# Standby FLSs for FLS Illumination
+# Standby Flying Light Specks
 
-## Python Version
-This software was developed based on Python 3.9.0
+This repository contains software that models deployment and failure handling of FLSs using standbys.
 
-## Clone
+Authors:  Hamed Alimohammadzadeh(halimoha@usc.edu), Shuqin Zhu (shuqinzh@usc.edu), and Shahram Ghandeharizadeh (shahram@usc.edu)
+
+# Features
+   * An FLS velocity model consisting of adjustable acceleration, deceleration, and speed parameters.
+   * Two FLS failure models:  RandTTL using a uniform distribution and BetaTTL using a skewed distribution.
+   * Fix-sized reliability groups consisting of G illuminating FLSs and 1 standby FLSs.
+   * Mean Time to Illuminate a Dark (MTID) point after an illuminating FLS fails.  Visualize results by generating png files in `./assets/figures`.
+   * Both illuminating and standby FLSs may fail either mid-flight to their destination or once at their destination.
+   * A configurable simulation model to quantify the Quality of Illumination (QoI) as a function of time for a point cloud.  Each FLS is modeled as a process.  With large point cloudes (FLSs), the simulator scales horizontally to run across multiple servers.
+   * Detection of obstructing dark standby FLSs.
+   * Two techniques to eliminate dark standby FLSs from obstructing the user field of view:  Dissolve and Suspend.
+   * Visualizes results by providing a histogram of the group sizes, box plot of distance from the center of a group to the group members, average distance from a dispatcher to group centroid
+
+# Limitations
+   * In general, a reliability group may consist of C standby FLSs.  The current implmentation supports C=1 only.
+   * We consider the field of view of only one user.
+
+# Clone
 ``git clone https://github.com/flslab/FailureHandling.git``
 
-## Running using Venv
+# Running using Venv
+This software was implemented and tested using Python 3.9.0.
 
-You can use the `setup_venv.sh` script to create and activate a virtual environment or alternatively follow these steps to set it up manually.
-First create a virtual environment using venv. You can use any name instead of env.
+We recommend using PyCharm, enabling the software to run across mutliple operating systems, e.g., Windows, MacOS, etc.
+
+Use the `bash setup_venv.sh` to create and activate a virtual environment or alternatively follow these steps to set it up manually.
+First create a virtual environment using venv. 
+You can use any name instead of env.
 
 ```
 cd StandbyFLSs
@@ -38,6 +58,18 @@ Run ``bash setup.sh`` to set up everything.
 If anything went wrong with the bash command, simply run ``pip3 install -r requirements.txt`` in the root directory. If you are using IDE like PyCharm, you can download all the requirements with it.
 We recommend the use of PyCharm for running this software on a single laptop or server for evaluation purposes.
 By installing and using PyCharm, the single server version of software will execute on a wide range of operating systems ranging from macOS to Windows.  
+
+
+# MTID
+The program `./utils/mtid.py` implements analytical models to compute the MTID for a collection of 3D point clouds (shapes) with different reliability groups.  
+The reliability groups may be computed using an algorithms such as k-Means or CANF.  
+More formally, `./utils/mtid.py` assumes:
+   * A text file that describes the 3D coordinates of a point cloud.  We provide several point clouds in `./assets/pointcloud`: dragon.txt, hat.txt, and skateboard.txt.  The variable `shapes` defines the point clouds that the program iterates.
+   * A .xlsx file that describes a reliability group computed for a shape using a grouping algorithm with a pre-specified group size.  The name of a file is [shape]\_[grouping algorithm]\_[group size].xlsx.  `shape` is from the previous bullet, a user specified identifier for a grouping algorithm, e.g., `K` for k-Means, a value for group size, e.g., 3.  In `./assets/pointcloud`, we provide files for the alternative shapes of the previous bullet, K-Means and CANF, and group sizes of {3, 5, 10, 20}.  These files were computed separately and placed in the `./assets/pointcloud` for use by `./utils/cmp_shape.py`.  They ensures MTID is independent of an algorithm that computes a reliability group, enabling its application to all possible grouping algorithms. 
+
+The output of executing `./utils/mtid.py` includes:
+   * `./assets/mtid_report.csv` contains the minimum, median, and maximum MTID.  It also computes other essential stats such as the minimum, median, and maximum distance of a standby at the center of a group to each group member. This information is reported for each shape, grouping algorithm, and group size.  This is a row of `./assets/mtid_report.csv` file.
+   * `./assets/figures` contains a listing of figures for the different shapes, grouping algorithms, and group sizes.  These figures show MTID, a histogram of group sizes constructed by a grouping algorithm, among others.
 
 
 ## Run Local
@@ -177,9 +209,6 @@ Once a reliability group is constructed, there will be a group centroid for stan
 to a group member is calculated using the average value of distances of all points to their group centroid.
 The Average MTID reported were calculated using the average value of the time for a standby FLS/newly deployed FLS to recover a failed illuminating FLS.
 Each of these time is the time traveled for an FLS to arrive at the illuminating point.
-
-The Script to compare the MTID of two group formation techniques: CANF and k-means can be found in `./util/cmp_shape.py`.
-By specifying variables: `shapes, max_speed, max_acceleration, max_deceleration, disp_cell_size`, the report will be generated in `./assets/mtid_report.csv`.
 
 | Term                     | Definition                                                                                                                    |
 |--------------------------|-------------------------------------------------------------------------------------------------------------------------------|
