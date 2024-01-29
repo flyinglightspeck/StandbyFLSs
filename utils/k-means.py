@@ -91,10 +91,9 @@ def write_group_formation(name, G, groups, pair_dists, center_dists):
 if __name__ == "__main__":
     # k = 253
 
-    # group_info = [["skateboard_G3", 576], ["skateboard_G20", 86], ["dragon_G3", 253], ["dragon_G20", 38],
-    #               ["hat_G3", 521], ["hat_G20", 78]]
+    group_info = [["skateboard_G3", 576], ["skateboard_G20", 86], ["dragon_G3", 253], ["dragon_G20", 38],
+                  ["hat_G3", 521], ["hat_G20", 78]]
 
-    group_info = [["bucket_face", 3], ["bucket_face", 5], ["bucket_face", 20]]
     for info in group_info:
         name = info[0]
         group_size = info[1]

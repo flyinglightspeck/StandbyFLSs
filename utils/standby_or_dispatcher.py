@@ -1,4 +1,4 @@
-from solve_obstructing import *
+from move_back_obstructing import *
 import matplotlib as mpl
 
 mpl.rcParams['font.family'] = 'Times New Roman'

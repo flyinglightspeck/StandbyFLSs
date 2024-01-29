@@ -1,7 +1,7 @@
 import csv
 import os
 
-from solve_obstructing import solve_single_view
+from move_back_obstructing import solve_single_view
 from obstructing_detection import calculate_single_view, get_points_from_file
 import multiprocessing as mp
 

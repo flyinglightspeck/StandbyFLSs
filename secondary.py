@@ -19,7 +19,7 @@ class SecondaryNode:
         self.start_time = 0
         self.dir_meta = ''
         self.processes = dict()
-        self.should_stop = False
+        self._stop_event = threading.Event()
         self.failure_handler_thread = None
         self.cpu_util = []
         self.id = argv
@@ -73,14 +73,22 @@ class SecondaryNode:
         # to join the processes of failed FLSs
         error_handling_socket = worker.WorkerSocket()
         error_handling_socket.sock.settimeout(1)
-        while self.should_stop:
+        process_counter = 0
+        while True:
+            if self._stop_event.is_set():
+                break
+            # logger.debug("STOPPING Processes")
             try:
                 msg, _ = error_handling_socket.receive()
+                logger.debug(f"MSG: {msg}")
             except socket.timeout:
+                # logger.debug(f"SECONDARY Timeout")
                 continue
 
             if msg.fid in self.processes:
                 self.processes.pop(msg.fid).join()
+                process_counter += 1
+                logger.debug(f"PROCESS JOINT: {process_counter}")
 
     def _start_failure_handler_thread(self):
         self.failure_handler_thread = threading.Thread(target=self._handle_failures)
@@ -89,7 +97,8 @@ class SecondaryNode:
         logger.info("Started failure handler")
 
     def _stop_failure_handler_thread(self):
-        self.should_stop = True
+        logger.debug(f"SHOULD STOP: TRUE")
+        self._stop_event.set()
         self.failure_handler_thread.join()
 
     def _ack_primary_node(self):

@@ -216,7 +216,7 @@ Specify the configuration and shapes to check in the file, instructions can be f
 The output can be found in ``./assets/obstructing/``, based on your setting, there will be a directories generated.
 The result will report the number of visible illuminating FLSs and obstructing standby FLSs if the user look from the {front, back, top, bottom, left, right}, total 6 views.
 
-To solve obstruction detected from a view, run ``solve_obstructing.py`` to move FLSs back. 
+To solve obstruction detected from a view, run ``./utils/solve_obstructing.py`` to move FLSs back. 
 The obstructing standby FLS will replace the illuminating FLS that it was blocking, and become an illuminating FLS.
 The previous blocked illuminating FLS will move back, hide behind the new illuminating FLS, and become a standby FLS, replacing the previous obstructing FLS.
 FLSs may travel a certain distance, the report file will report the distance traveled by the obstructing FLS and illuminating FLS;
@@ -226,7 +226,7 @@ the original and new standby FLS's position to the center of the group that they
 the original and new MTID for a failure in the group recovered by standby FLSs.
 The report can be found in  ``./assets/obstructing/Q{illumination cell to display cell ratio}``
 
-To solve obstruction detected from all views as a whole process, run ``move_back_all_views.py``.
+To solve obstruction detected from all views as a whole process, run ``./utils/move_back_all_views.py``.
 Starting from the first view, obstructing standby FLSs detected from this view will be moved back, then those detected from the next view.
 Do this for all six views, and report same metrics as previous.
 
@@ -242,3 +242,19 @@ Each time, the user will walk and the vector pointing from the center of the sha
 After recording all obstructing information, those obstructing FLSs will look for closest illuminating FLS, and hide inside its illumination cell (if Q > 3).
 
 
+## Dissolve, Suspend and Hide
+Obstructing FLSs needs to be hidden from user's Field of View (FoV).
+We have proposed two techniques: dissolve and suspend.
+Dissolve will permanently dissolve reliability groups that have standby FLSs obstructing user's FoV.
+Suspend will temporarily dissolve reliability groups that have standby FLSs obstructing user's FoV, 
+and these groups will be restored once their standby FLSs are no longer in user's FOV.
+
+Other solution to hide obstructing FLSs can be:
+1. Move obstructing FLSs back along the user's eye gaze, and make it replace blocked illuminating FLSs;
+ while illuminating FLSs move back short distances and become new standby FLSs that hide behind. (As described in previous section.)
+2. Move obstructing FLSs into illumination cells of the closest illuminating FLS. 
+ This option is only available when the Illumination Cell to Display Cell Ratio (Q) is no smaller than 3.
+
+To run this, first run ``./utils/obstructing_prevention.py`` to generate required obstruction information files.
+Then run ``./utils/solve_obstruction.py`` with the same configurations.
+Plots showing those results will be generated in corresponding repositories.

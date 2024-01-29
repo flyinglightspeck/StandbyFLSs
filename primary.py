@@ -276,7 +276,7 @@ class PrimaryNode:
             self.radio_ranges = [Config.MAX_RANGE] * len(self.groups)
 
         if Config.DEBUG and Config.SANITY_TEST == 0:
-            self.groups = self.groups[:2]
+            self.groups = self.groups[:3]
             self.radio_ranges = self.radio_ranges[:4]
 
         for group in self.groups:

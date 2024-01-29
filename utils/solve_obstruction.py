@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib as mpl
 from matplotlib.ticker import PercentFormatter
 
-from solve_obstructing import *
+from move_back_obstructing import *
 from standby_or_dispatcher import distance_point_to_line
 from obstructing_prevention import rotate_vector, closest_points, read_obstruction_maps
 
@@ -166,14 +166,14 @@ def draw_change_plot(path, type, title_name, all_info, figure_name):
         os.makedirs(f"{path}/{shape}", exist_ok=True)
 
     draw_dissolved_percentage(granularity, removed_lists, standby_nums, title_name,
-                              f"{path}/{shape}/{shape}_K{k}_GR{granularity}_{figure_name}_percentage.png")
+                              f"{path}/{shape}/{shape}_K{G}_GR{granularity}_{figure_name}_percentage.png")
     draw_MTID_change_percentage(granularity, mtids_change_percentages,
-                                f"{path}/{shape}/{shape}_K{k}_GR{granularity}_MTID_percentage_{figure_name}.png")
+                                f"{path}/{shape}/{shape}_K{G}_GR{granularity}_MTID_percentage_{figure_name}.png")
     draw_avg_dist_traveled(granularity, avg_dists_traveled,
-                           f"{path}/{shape}/{shape}_K{k}_GR{granularity}_dist_traveled_{figure_name}.png")
+                           f"{path}/{shape}/{shape}_K{G}_GR{granularity}_dist_traveled_{figure_name}.png")
     if len(all_info[0]) >= 5:
         draw_avg_dist_traveled(granularity, avg_dists_restored,
-                               f"{path}/{shape}/{shape}_K{k}_GR{granularity}_dist_traveled_restore_{figure_name}.png")
+                               f"{path}/{shape}/{shape}_K{G}_GR{granularity}_dist_traveled_restore_{figure_name}.png")
 
 
 def draw_changed_standby(granularity, restored_list, removed_list, activating_list, save_path):
@@ -696,38 +696,50 @@ def suspend_hide(file_path, ptcld_folder, granularity, shape, speed, ratio, k, s
 
 if __name__ == "__main__":
 
-    figure_path = "../assets/obstructing_detection"
+    figure_path = "../assets/obstructing"
     if not os.path.exists(figure_path):
         os.makedirs(figure_path, exist_ok=True)
 
     ptcld_folder = "../assets/pointcloud"
     meta_dir = "../assets"
 
-    speed = 6.11
+    # We assume that an FLS has a max velocity, acceleration and deceleration of {velocity_model}, and will react based on
+    # the velocity model. (see './velocity.py')
+    velocity_model = 6.11
 
-    for granularity in [10]:
+    # We assume the user walk as a circle, centering the center of the shape.
+    # Each time, the user will walk and the vector pointing from the center of the shape toward the user's eye will form
+    # a {granularity} degree angle with the previous one.
+    granularity_list = [45]  # the granularity of degree changes.
+
+    Q_list = [3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.
+
+    # Select these base on the group formation you have, see '../assets/pointclouds'
+    G_list = [3, 20]  # This is the size of group constructed by the group formation technique that you would like to test.
+    shape_list = ["skateboard", "dragon", "hat"]  # This is the list of shape to run this on
+
+
+    for granularity in granularity_list:
         p_list = []
 
-        for shape in ["skateboard", "dragon", "hat"]:
-        # for shape in ["skateboard"]:
-            # txt_file = f"{shape}.txt"
-            # standby_file = f"{shape}_standby.txt"
+        for shape in shape_list:
 
-            for k in [3]:
+            for G in G_list:
 
-                temp_info, perm_info, move_back_info, hide_info = [], [], [], []
-                for ratio in [1, 3, 5, 10]:
-                    file_path = f"{meta_dir}/obstructing/R{ratio}/K{k}"
+                suspend_info, dissolve_info, move_back_info, hide_info = [], [], [], []
 
-                    temp_info.append(suspend(figure_path, file_path, ptcld_folder, granularity, shape, speed, ratio, k))
-                    perm_info.append(
-                        dissolve(figure_path, file_path, ptcld_folder, granularity, shape, speed, ratio, k))
+                for Q in Q_list:
+                    file_path = f"{meta_dir}/obstructing/R{Q}/K{G}"
+
+                    suspend_info.append(suspend(figure_path, file_path, ptcld_folder, granularity, shape, velocity_model, Q, G))
+                    dissolve_info.append(
+                        dissolve(figure_path, file_path, ptcld_folder, granularity, shape, velocity_model, Q, G))
                     move_back_info.append(
-                        suspend_move_back(file_path, ptcld_folder, granularity, shape, speed, ratio, k, False))
+                        suspend_move_back(file_path, ptcld_folder, granularity, shape, velocity_model, Q, G, False))
                     hide_info.append(
-                        suspend_hide(file_path, ptcld_folder, granularity, shape, speed, ratio, k, False))
+                        suspend_hide(file_path, ptcld_folder, granularity, shape, velocity_model, Q, G, False))
 
-                draw_change_plot(figure_path, 'Suspend', 'Suspended', temp_info, 'suspend')
-                draw_change_plot(figure_path, 'Dissolve', 'Dissolved', perm_info, 'dissolve')
+                draw_change_plot(figure_path, 'Suspend', 'Suspended', suspend_info, 'suspend')
+                draw_change_plot(figure_path, 'Dissolve', 'Dissolved', dissolve_info, 'dissolve')
                 draw_change_plot(figure_path, 'Moveback', 'Moved Back', move_back_info, 'transpose')
                 draw_change_plot(figure_path, 'Hide', 'Hidden', hide_info, 'hide')
