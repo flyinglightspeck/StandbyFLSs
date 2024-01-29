@@ -24,8 +24,8 @@ def distance_point_to_line(point, line_points):
     return distance
 
 
-def get_dist_to_dispatcher(dispatcher, shape, k, file_folder, ratio):
-    input_file = f"{shape}_G{k}.xlsx"
+def get_dist_to_dispatcher(dispatcher, shape, G, file_folder, ratio):
+    input_file = f"{shape}_G{G}.xlsx"
 
     groups = read_cliques_xlsx(f"{file_folder}/{input_file}", ratio)
 
@@ -79,7 +79,7 @@ def zip_and_sort(dists_to_dispatcher, standby_MTID, new_standby_MTID, dispatcher
     return np.transpose(sorted_paired_list)
 
 
-def cmp_standby_dispatcher(ratio, ptcld_folder, file_path, move_back_path, txt_file, standby_file, speed):
+def cmp_standby_dispatcher(ratio, G, ptcld_folder, file_path, move_back_path, txt_file, standby_file, speed):
     max_speed = max_acceleration = max_deceleration = speed
 
     points, boundary, standbys = get_points_from_file(ratio, ptcld_folder, file_path, txt_file, standby_file)
@@ -91,9 +91,9 @@ def cmp_standby_dispatcher(ratio, ptcld_folder, file_path, move_back_path, txt_f
     dispatcher.append([boundary[0][0], boundary[0][1], 0])
     dispatcher.append([boundary[1][0], boundary[0][1], 0])
 
-    ori_dists_center = get_dist_to_centroid(standbys[:, 0:3], shape, k, ptcld_folder, ratio)
-    new_dists_center = get_dist_to_centroid(new_standbys[:, 0:3], shape, k, ptcld_folder, ratio)
-    dists_to_dispatcher = get_dist_to_dispatcher(dispatcher, shape, k, ptcloud_folder, ratio)
+    ori_dists_center = get_dist_to_centroid(standbys[:, 0:3], shape, G, ptcld_folder, ratio)
+    new_dists_center = get_dist_to_centroid(new_standbys[:, 0:3], shape, G, ptcld_folder, ratio)
+    dists_to_dispatcher = get_dist_to_dispatcher(dispatcher, shape, G, ptcloud_folder, ratio)
 
     standby_MTID = [calculate_travel_time(max_speed, max_acceleration, max_deceleration, d) for d in ori_dists_center]
 
@@ -111,16 +111,16 @@ if __name__ == "__main__":
 
     for ratio in [3, 5, 10]:
 
-        for k in [3, 20]:
+        for G in [3, 20]:
 
             for shape in ["skateboard", "dragon", "hat"]:
-                file_path = f"{meta_dir}/obstructing/R{ratio}/K{k}"
-                move_back_path = f"{meta_dir}/obstructing_iteration/obstructing/R{ratio}/K{k}"
+                file_path = f"{meta_dir}/obstructing/R{ratio}/G{G}"
+                move_back_path = f"{meta_dir}/obstructing_iteration/obstructing/R{ratio}/G{G}"
                 txt_file = f"{shape}.txt"
                 standby_file = f"{shape}_standby.txt"
 
                 for speed in [6.11]:
-                    MTID_info = cmp_standby_dispatcher(ratio, ptcloud_folder, file_path, move_back_path, txt_file, standby_file, speed)
+                    MTID_info = cmp_standby_dispatcher(ratio, G, ptcloud_folder, file_path, move_back_path, txt_file, standby_file, speed)
 
                     slops = []
                     for i, _ in enumerate(MTID_info[0]):
@@ -131,5 +131,5 @@ if __name__ == "__main__":
                                         MTID_info[0][i] - MTID_info[0][i - 1]))
                     print(f"{shape}, slop: {statistics.mean(slops)}")
 
-                    output_info = [meta_dir, shape, ratio, k, speed, ratio]
+                    output_info = [meta_dir, shape, ratio, G, speed, ratio]
                     draw_dispatcher_standby_MTID(MTID_info, output_info)

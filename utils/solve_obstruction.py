@@ -17,8 +17,8 @@ markers = ['s', 'v', 'o', 'x']
 Q_list = [1, 3, 5, 10]
 
 
-def hide_in_illumcell(ptcld_folder, meta_direc, ratio, k, shape, granularity):
-    output_path = f"{meta_direc}/obstructing/R{ratio}/K{k}"
+def hide_in_illumcell(ptcld_folder, meta_direc, ratio, G, shape, granularity):
+    output_path = f"{meta_direc}/obstructing/R{ratio}/G{G}"
 
     txt_file = f"{shape}.txt"
     standby_file = f"{shape}_standby.txt"
@@ -40,7 +40,7 @@ def hide_in_illumcell(ptcld_folder, meta_direc, ratio, k, shape, granularity):
         closest_ill_coords = closest_points(standbys, points[:, :3])
 
         is_member = 0
-        standby_match = get_illum_standby_matching(shape, k, ptcld_folder, ratio)
+        standby_match = get_illum_standby_matching(shape, G, ptcld_folder, ratio)
         for i in range(len(standbys)):
             if closest_ill_coords[i] in standby_match[i]:
                 is_member += 1
@@ -79,8 +79,8 @@ def get_boundary(ptcld_folder, ptcld_file, ratio):
     return point_boundary
 
 
-def get_illum_standby_matching(shape, k, ptcld_folder, ratio):
-    group_file = f"{shape}_G{k}.xlsx"
+def get_illum_standby_matching(shape, G, ptcld_folder, ratio):
+    group_file = f"{shape}_G{G}.xlsx"
 
     groups = read_cliques_xlsx(f"{ptcld_folder}/{group_file}", ratio)
 
@@ -91,8 +91,8 @@ def get_illum_standby_matching(shape, k, ptcld_folder, ratio):
 
     return standby_match
 
-def get_recover_distance_move_back(shape, k, ptcld_folder, ratio, moved_standbys):
-    group_file = f"{shape}_G{k}.xlsx"
+def get_recover_distance_move_back(shape, G, ptcld_folder, ratio, moved_standbys):
+    group_file = f"{shape}_G{G}.xlsx"
 
     groups = read_cliques_xlsx(f"{ptcld_folder}/{group_file}", ratio)
 
@@ -105,8 +105,8 @@ def get_recover_distance_move_back(shape, k, ptcld_folder, ratio, moved_standbys
     return dists
 
 
-def get_recover_distance_hide(standbys, obstructing_list, shape, k, ptcld_folder, ratio, moved_standbys):
-    group_file = f"{shape}_G{k}.xlsx"
+def get_recover_distance_hide(standbys, obstructing_list, shape, G, ptcld_folder, ratio, moved_standbys):
+    group_file = f"{shape}_G{G}.xlsx"
 
     groups = read_cliques_xlsx(f"{ptcld_folder}/{group_file}", ratio)
 
@@ -124,8 +124,8 @@ def get_recover_distance_hide(standbys, obstructing_list, shape, k, ptcld_folder
     return dists
 
 
-def get_recover_distance(standbys, shape, k, ptcld_folder, ratio, obstructing_list, dispatcher):
-    group_file = f"{shape}_G{k}.xlsx"
+def get_recover_distance(standbys, shape, G, ptcld_folder, ratio, obstructing_list, dispatcher):
+    group_file = f"{shape}_G{G}.xlsx"
 
     groups = read_cliques_xlsx(f"{ptcld_folder}/{group_file}", ratio)
 
@@ -166,14 +166,14 @@ def draw_change_plot(path, type, title_name, all_info, figure_name):
         os.makedirs(f"{path}/{shape}", exist_ok=True)
 
     draw_dissolved_percentage(granularity, removed_lists, standby_nums, title_name,
-                              f"{path}/{shape}/{shape}_K{G}_GR{granularity}_{figure_name}_percentage.png")
+                              f"{path}/{shape}/{shape}_G{G}_GR{granularity}_{figure_name}_percentage.png")
     draw_MTID_change_percentage(granularity, mtids_change_percentages,
-                                f"{path}/{shape}/{shape}_K{G}_GR{granularity}_MTID_percentage_{figure_name}.png")
+                                f"{path}/{shape}/{shape}_G{G}_GR{granularity}_MTID_percentage_{figure_name}.png")
     draw_avg_dist_traveled(granularity, avg_dists_traveled,
-                           f"{path}/{shape}/{shape}_K{G}_GR{granularity}_dist_traveled_{figure_name}.png")
+                           f"{path}/{shape}/{shape}_G{G}_GR{granularity}_dist_traveled_{figure_name}.png")
     if len(all_info[0]) >= 5:
         draw_avg_dist_traveled(granularity, avg_dists_restored,
-                               f"{path}/{shape}/{shape}_K{G}_GR{granularity}_dist_traveled_restore_{figure_name}.png")
+                               f"{path}/{shape}/{shape}_G{G}_GR{granularity}_dist_traveled_restore_{figure_name}.png")
 
 
 def draw_changed_standby(granularity, restored_list, removed_list, activating_list, save_path):
@@ -227,12 +227,6 @@ def draw_avg_dist_traveled(granularity, dists_lists, save_path):
     plt.xticks(np.arange(0, 360 + granularity, step=max(granularity, 20)))
     ax.set_ylim(0, 710)
 
-    # yticks = list(plt.yticks()[0])
-    # yticks = yticks + [max(max(dists_lists))]
-    # plt.yticks(sorted(yticks))
-
-    # Add legend
-    # ax.legend(loc=(0.7, 0.47))
 
     leg = ax.legend(loc=(0.8, 0.7), columnspacing=0.5, frameon=False)
     # plt.show(dpi=500)
@@ -467,15 +461,15 @@ def dissolve(figure_path, file_path, ptcld_folder, granularity, shape, speed, ra
         os.makedirs(f"{figure_path}/Dissolve", exist_ok=True)
 
     draw_changed_standby_permanent(granularity, removed_list, activating_list,
-                                   f"{figure_path}/Dissolve/{shape}_R{ratio}_K{k}_GR{granularity}.png")
+                                   f"{figure_path}/Dissolve/{shape}_R{ratio}_G{k}_GR{granularity}.png")
     print(
         f"Shape:{shape}, R:{ratio}, G:{file_path[-1]}, Dissolved Percentage:{sum(removed_list) / len(standby_list) * 100}")
 
     return cumulative_removed_list, len(standby_list), mtids_change_percentage, avg_dist_traveled
 
 
-def suspend(figure_path, file_path, ptcld_folder, granularity, shape, speed, ratio, k):
-    print(f"Suspend: {shape}, K:{k}, Q:{ratio}")
+def suspend(figure_path, file_path, ptcld_folder, granularity, shape, speed, ratio, G):
+    print(f"Suspend: {shape}, G:{G}, Q:{ratio}")
     max_speed = max_acceleration = max_deceleration = speed
 
     standbys, boundary, dispatcher = get_shape_info(file_path, ptcld_folder, shape, ratio)
@@ -493,7 +487,7 @@ def suspend(figure_path, file_path, ptcld_folder, granularity, shape, speed, rat
     avg_remove_dist = []
     avg_restore_dist = []
 
-    dists = get_recover_distance(standbys, shape, k, ptcld_folder, ratio, standby_list, dispatcher)
+    dists = get_recover_distance(standbys, shape, G, ptcld_folder, ratio, standby_list, dispatcher)
     mtids = [calculate_travel_time(max_speed, max_acceleration, max_deceleration, d) for d in dists]
     ori_mtid = statistics.mean(mtids)
 
@@ -528,7 +522,7 @@ def suspend(figure_path, file_path, ptcld_folder, granularity, shape, speed, rat
         #     print(f"Removed: {removed}, Restored: {restored}")
         #     print(statistics.mean(remove_dist) if len(remove_dist) > 0 else 0)
 
-        dists = get_recover_distance(standbys, shape, k, ptcld_folder, ratio, standby_list, dispatcher)
+        dists = get_recover_distance(standbys, shape, G, ptcld_folder, ratio, standby_list, dispatcher)
         mtids = [calculate_travel_time(max_speed, max_acceleration, max_deceleration, d) for d in dists]
 
         mtids_change_percentage.append((statistics.mean(mtids) - ori_mtid) / ori_mtid)
@@ -537,12 +531,12 @@ def suspend(figure_path, file_path, ptcld_folder, granularity, shape, speed, rat
         os.makedirs(f"{figure_path}/Suspend", exist_ok=True)
 
     draw_changed_standby(granularity, restored_list, removed_list, activating_list,
-                         f"{figure_path}/Suspend/{shape}_R{ratio}_K{k}_GR{granularity}.png")
+                         f"{figure_path}/Suspend/{shape}_R{ratio}_G{G}_GR{granularity}.png")
 
     return removed_list, len(standby_list), mtids_change_percentage, avg_remove_dist, avg_restore_dist
 
 
-def suspend_move_back(file_path, ptcld_folder, granularity, shape, speed, ratio, k, solve_obstruction=True):
+def suspend_move_back(file_path, ptcld_folder, granularity, shape, speed, ratio, G, solve_obstruction=True):
     max_speed = max_acceleration = max_deceleration = speed
 
     standbys, boundary, dispatcher = get_shape_info(file_path, ptcld_folder, shape, ratio)
@@ -558,7 +552,7 @@ def suspend_move_back(file_path, ptcld_folder, granularity, shape, speed, ratio,
     mtids_change_percentage = []
     avg_mtids = []
 
-    dists = get_recover_distance_move_back(shape, k, ptcld_folder, ratio, standbys)
+    dists = get_recover_distance_move_back(shape, G, ptcld_folder, ratio, standbys)
     mtids = [calculate_travel_time(max_speed, max_acceleration, max_deceleration, d) for d in dists]
     ori_mtid = statistics.mean(mtids)
 
@@ -579,7 +573,7 @@ def suspend_move_back(file_path, ptcld_folder, granularity, shape, speed, ratio,
         if solve_obstruction:
             angle = i * granularity
             user_pos = shape_center + rotate_vector(vector, angle)
-            solve_single_view(shape, k, ratio, f"{granularity}_{index}", "", user_pos, ptcld_folder, file_path,
+            solve_single_view(shape, G, ratio, f"{granularity}_{index}", "", user_pos, ptcld_folder, file_path,
                               test=False, file_surfix="moved_standby")
 
         remove_dist = []
@@ -611,7 +605,7 @@ def suspend_move_back(file_path, ptcld_folder, granularity, shape, speed, ratio,
         avg_remove_dist.append(statistics.mean(remove_dist) if len(remove_dist) > 0 else 0)
         avg_restore_dist.append(statistics.mean(restore_dist) if len(restore_dist) > 0 else 0)
 
-        dists = get_recover_distance_move_back(shape, k, ptcld_folder, ratio, none_obstruct_stanby)
+        dists = get_recover_distance_move_back(shape, G, ptcld_folder, ratio, none_obstruct_stanby)
 
         mtids = [calculate_travel_time(max_speed, max_acceleration, max_deceleration, d) for d in dists]
 
@@ -622,7 +616,7 @@ def suspend_move_back(file_path, ptcld_folder, granularity, shape, speed, ratio,
     return removed_list, len(standby_list), mtids_change_percentage, avg_remove_dist, avg_restore_dist, avg_mtids, avg_dists
 
 
-def suspend_hide(file_path, ptcld_folder, granularity, shape, speed, ratio, k, solve_obstruction=True):
+def suspend_hide(file_path, ptcld_folder, granularity, shape, speed, ratio, G, solve_obstruction=True):
     if ratio < 3:
         return [], 0, [], [], [], [], []
 
@@ -642,7 +636,7 @@ def suspend_hide(file_path, ptcld_folder, granularity, shape, speed, ratio, k, s
     avg_mtids = []
     avg_dists = []
 
-    dists = get_recover_distance_move_back(shape, k, ptcld_folder, ratio, standbys)
+    dists = get_recover_distance_move_back(shape, G, ptcld_folder, ratio, standbys)
     mtids = [calculate_travel_time(max_speed, max_acceleration, max_deceleration, d) for d in dists]
     ori_mtid = statistics.mean(mtids)
 
@@ -650,7 +644,7 @@ def suspend_hide(file_path, ptcld_folder, granularity, shape, speed, ratio, k, s
     avg_restore_dist = []
 
     if solve_obstruction:
-        hide_in_illumcell(ptcld_folder, meta_dir, ratio, k, shape, granularity)
+        hide_in_illumcell(ptcld_folder, meta_dir, ratio, G, shape, granularity)
 
     none_obstruct_stanby = read_coordinates(f"{file_path}/points/{shape}_{granularity}_hide_standby.txt", ' ', 1)
     none_obstruct_stanby = none_obstruct_stanby[:, 0:3]
@@ -683,7 +677,7 @@ def suspend_hide(file_path, ptcld_folder, granularity, shape, speed, ratio, k, s
         avg_remove_dist.append(statistics.mean(remove_dist) if len(remove_dist) > 0 else 0)
         avg_restore_dist.append(statistics.mean(restore_dist) if len(restore_dist) > 0 else 0)
 
-        dists = get_recover_distance_hide(standbys, obstructing_list, shape, k, ptcld_folder, ratio, none_obstruct_stanby)
+        dists = get_recover_distance_hide(standbys, obstructing_list, shape, G, ptcld_folder, ratio, none_obstruct_stanby)
 
         mtids = [calculate_travel_time(max_speed, max_acceleration, max_deceleration, d) for d in dists]
 
@@ -729,7 +723,7 @@ if __name__ == "__main__":
                 suspend_info, dissolve_info, move_back_info, hide_info = [], [], [], []
 
                 for Q in Q_list:
-                    file_path = f"{meta_dir}/obstructing/R{Q}/K{G}"
+                    file_path = f"{meta_dir}/obstructing/R{Q}/G{G}"
 
                     suspend_info.append(suspend(figure_path, file_path, ptcld_folder, granularity, shape, velocity_model, Q, G))
                     dissolve_info.append(
