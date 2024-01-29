@@ -5,6 +5,7 @@ import struct
 import numpy as np
 from constants import Constants
 from config import Config
+from utils import logger
 
 
 class WorkerSocket:

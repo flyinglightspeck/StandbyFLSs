@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from collections import Counter
 
-from cmp_shape import read_coordinates
+from mtid import read_coordinates
 
 
 def distance_between(coord1, coord2):

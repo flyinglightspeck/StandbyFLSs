@@ -243,6 +243,7 @@ class PrimaryNode:
 
     def _send_msg_to_node(self, nid, msg):
         send_msg(self.client_sockets[nid], msg)
+        logger.debug(f"SENDING TO {nid}: {msg}")
 
     def _receive_msg_from_node(self, nid):
         return self.client_sockets[nid].recv(1024)
@@ -275,7 +276,7 @@ class PrimaryNode:
             self.radio_ranges = [Config.MAX_RANGE] * len(self.groups)
 
         if Config.DEBUG and Config.SANITY_TEST == 0:
-            self.groups = self.groups[:4]
+            self.groups = self.groups[:2]
             self.radio_ranges = self.radio_ranges[:4]
 
         for group in self.groups:

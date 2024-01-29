@@ -28,6 +28,7 @@ class NetworkThread(threading.Thread):
         # stop_flag = False
         while not self.stopped():
             # if self.sock.is_ready():
+            logger.debug(f"Sock: {self.sock}")
             msg, length = self.sock.receive()
             # self.context.log_received_message(msg.type, length)
             if self.is_message_valid(msg):

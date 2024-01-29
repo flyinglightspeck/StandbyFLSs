@@ -12,7 +12,7 @@ class Config:
     MAX_SPEED = 3
     DISPLAY_CELL_SIZE = 0.05
     BUSY_WAITING = False
-    DURATION = 60 * 1
+    DURATION = 60 * 10
     G = 3 # if G = 0 no standbys are deployed
     SHAPE = 'chess'
     RESULTS_PATH = 'results'

@@ -48,14 +48,17 @@ class SecondaryNode:
 
         while True:
             self.cpu_util.append((time.time(), psutil.cpu_percent()))
-
+            logger.debug(self.sock)
             msg = recv_msg(self.sock)
             logger.debug(msg)
 
             if not msg:
+                self.should_stop = True
+                logger.debug(f"SECONDARY STOPPING: {self.id}")
                 break
             else:
                 logger.debug(f"CREATE PROCESS fid={msg['fid']} time={time.time()}")
+
                 default_failure_timeout = None
                 if Config.SANITY_TEST >= 2:
                     default_failure_timeout = msg['fid'] * Config.STANDBY_TEST_CONFIG[2][1]
