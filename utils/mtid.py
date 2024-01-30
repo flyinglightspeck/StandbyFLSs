@@ -483,11 +483,6 @@ if __name__ == '__main__':
 
     for shape in shapes:
 
-        file_path = '../assets/pointcloud/' + shape + '.txt'
-        unique_coordinates = read_coordinates(file_path)
-
-        F = len(unique_coordinates)
-
         for i, group_type in enumerate(["K", "G"]):
 
             group_name = group_names[i]
@@ -546,7 +541,9 @@ if __name__ == '__main__':
                 group_sizes = get_groupsize_list(file_path)
                 group_sizes.sort()
 
-                print(group_sizes)
+                total_points = sum(group_sizes)
+
+                # print(group_sizes)
                 median_index = len(group_sizes) // 2
                 median_size = (group_sizes[median_index] + group_sizes[~median_index]) / 2
 
@@ -564,10 +561,7 @@ if __name__ == '__main__':
 
                 MTIDs = []
 
-                print(
-                    f"Size of group_size: {len(group_sizes)}, Size of group_dist_to_centroid: {len(group_dist_to_centroid)}")
-
-                MTIDs = [(size * (mttf / (size + 1)) / (avg_mttr / (mttf / (size + 1)))) / F for size in group_sizes]
+                MTIDs = [(size * (mttf / (size + 1)) / (avg_mttr / (mttf / (size + 1)))) / total_points for size in group_sizes]
 
                 MTIDs.sort()
                 MTID_list.append(MTIDs)

@@ -65,12 +65,13 @@ The program `./utils/mtid.py` implements analytical models to compute the MTID f
 The reliability groups may be computed using an algorithms such as k-Means or CANF.  
 More formally, `./utils/mtid.py` assumes:
    * A text file that describes the 3D coordinates of a point cloud.  We provide several point clouds in `./assets/pointcloud`: dragon.txt, hat.txt, and skateboard.txt.  The variable `shapes` defines the point clouds that the program iterates.
-   * A .xlsx file that describes a reliability group computed for a shape using a grouping algorithm with a pre-specified group size.  The name of a file is [shape]\_[grouping algorithm]\_[group size].xlsx.  `shape` is from the previous bullet, a user specified identifier for a grouping algorithm, e.g., `K` for k-Means, a value for group size, e.g., 3.  In `./assets/pointcloud`, we provide files for the alternative shapes of the previous bullet, K-Means and CANF, and group sizes of {3, 5, 10, 20}.  These files were computed separately and placed in the `./assets/pointcloud` for use by `./utils/mtid.py`.  They ensures MTID is independent of an algorithm that computes a reliability group, enabling its application to all possible grouping algorithms. 
+   * A .xlsx file that describes a reliability group computed for a shape using a grouping algorithm with a pre-specified group size.  The name of a file is [shape]\_[grouping algorithm]\_[group size].xlsx.  `shape` is from the previous bullet, a user specified identifier for a grouping algorithm, e.g., `K` for k-Means, a value for group size, e.g., 3.  In `./assets/pointcloud`, we provide files for the alternative shapes of the previous bullet, K-Means and CANF, and group sizes of {3, 5, 10, 20}.  These files were computed separately and placed in the `./assets/pointcloud` for use by `./utils/mtid.py`.  They ensure MTID is independent of an algorithm that computes a reliability group, enabling its application to all possible grouping algorithms. 
 
 The output of executing `./utils/mtid.py` includes:
    * `./assets/mtid_report.csv` contains the minimum, median, and maximum MTID.  It also computes other essential stats such as the minimum, median, and maximum distance of a standby at the center of a group to each group member. This information is reported for each shape, grouping algorithm, and group size.  This is a row of `./assets/mtid_report.csv` file.
    * `./assets/figures` contains a listing of figures for the different shapes, grouping algorithms, and group sizes.  These figures show MTID, a histogram of group sizes constructed by a grouping algorithm, among others.
 
+![](assets/figures/Workflow_MTID.png)
 
 ## Run Local
 
@@ -245,7 +246,7 @@ Specify the configuration and shapes to check in the file, instructions can be f
 The output can be found in ``./assets/obstructing/``, based on your setting, there will be a directories generated.
 The result will report the number of visible illuminating FLSs and obstructing standby FLSs if the user look from the {front, back, top, bottom, left, right}, total 6 views.
 
-To solve obstruction detected from a view, run ``./utils/solve_obstructing.py`` to move FLSs back. 
+To solve obstruction detected from a view, run ``./utils/move_back_obstructing.py`` to move FLSs back. 
 The obstructing standby FLS will replace the illuminating FLS that it was blocking, and become an illuminating FLS.
 The previous blocked illuminating FLS will move back, hide behind the new illuminating FLS, and become a standby FLS, replacing the previous obstructing FLS.
 FLSs may travel a certain distance, the report file will report the distance traveled by the obstructing FLS and illuminating FLS;
@@ -258,6 +259,8 @@ The report can be found in  ``./assets/obstructing/Q{illumination cell to displa
 To solve obstruction detected from all views as a whole process, run ``./utils/move_back_all_views.py``.
 Starting from the first view, obstructing standby FLSs detected from this view will be moved back, then those detected from the next view.
 Do this for all six views, and report same metrics as previous.
+
+![](assets/figures/Workflow_Obstructing_Detection.png)
 
 
 ### Obstructing FLS **Prevention**
@@ -287,3 +290,5 @@ Other solution to hide obstructing FLSs can be:
 To run this, first run ``./utils/obstructing_prevention.py`` to generate required obstruction information files.
 Then run ``./utils/solve_obstruction.py`` with the same configurations.
 Plots showing those results will be generated in corresponding repositories.
+
+![](assets/figures/Workflow_Suspend_Dissolve_hide.png)
