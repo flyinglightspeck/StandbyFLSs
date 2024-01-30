@@ -202,7 +202,6 @@ decentralized_gen_local.sh
 decentralized_aws.sh
 #decentralized_gen.sh
 
-assets/obstructing/*plots*
-assets/obstructing/*figures*
+assets/obstructing/
 
 

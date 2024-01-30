@@ -124,9 +124,15 @@ def calculate_obstructing_omnidegree(ptcld_folder, meta_direc, ratio, G, shape, 
         os.makedirs(output_path, exist_ok=True)
 
     txt_file = f"{shape}.txt"
-    standby_file = f"{shape}_standby.txt"
-    points, boundary, standbys = get_points_from_file(ratio, ptcld_folder, output_path, txt_file, standby_file)
 
+    try:
+        standby_file = f"{shape}_standby.txt"
+        points, boundary, standbys = get_points_from_file(ratio, ptcld_folder, output_path, txt_file, standby_file)
+    except Exception as e:
+        print("File Doesn't Generated Yet, Re-generating")
+        points, boundary, standbys, _ = get_points(shape, G, ptcld_folder, ratio)
+
+    np.savetxt(f'{output_path}/points/{shape}_standby.txt', standbys, fmt='%f', delimiter=' ')
     user_shifting = 100
 
     user_pos = [boundary[0][0] / 2 + boundary[1][0] / 2, boundary[0][1] - user_shifting,
@@ -140,7 +146,10 @@ def calculate_obstructing_omnidegree(ptcld_folder, meta_direc, ratio, G, shape, 
     degree_obst_map = dict()
 
     for i in range(0, math.floor(360 / granularity)):
-        points, boundary, standbys = get_points_from_file(ratio, ptcld_folder, output_path, txt_file, standby_file)
+        try:
+            points, boundary, standbys = get_points_from_file(ratio, ptcld_folder, output_path, txt_file, standby_file)
+        except Exception as e:
+            points, boundary, standbys, _ = get_points(shape, G, ptcld_folder, ratio)
 
         angle = i * granularity
 
@@ -150,6 +159,9 @@ def calculate_obstructing_omnidegree(ptcld_folder, meta_direc, ratio, G, shape, 
         print(f"START: {shape}, G: {G}, Ratio: {ratio}, Angle:{angle}")
 
         obstructing_list, obstructing_coord, blocked_coord = check_obstructing(user_pos, points, ratio, standbys)
+
+        if not os.path.exists(f"{output_path}/points"):
+            os.makedirs(f"{output_path}/points", exist_ok=True)
 
         if write_output:
             np.savetxt(f'{output_path}/points/{shape}_{granularity}_{i}.txt', obstructing_list, fmt='%d', delimiter=' ')
@@ -179,13 +191,16 @@ def prevent_obstructions(ptcld_folder, meta_direc, ratio, G, shape, granularity,
 
     txt_file = f"{shape}.txt"
     standby_file = f"{shape}_standby.txt"
-    _, boundary, standbys = get_points_from_file(ratio, ptcld_folder, output_path, txt_file, standby_file)
+
+    try:
+        _, boundary, standbys = get_points_from_file(ratio, ptcld_folder, output_path, txt_file, standby_file)
+    except Exception as e:
+        _, boundary, standbys, _ = get_points(shape, G, ptcld_folder, ratio)
+
     points = read_coordinates(f"{ptcld_folder}/{txt_file}", ' ')
     points = np.array(points)
     points = points * ratio
 
-    # print(list(points))
-    # return
 
     if obstructing_maps:
         combined_obstruction_map = np.sum(obstructing_maps.values())
@@ -210,7 +225,10 @@ def prevent_obstructions(ptcld_folder, meta_direc, ratio, G, shape, granularity,
         # print(standbys)
 
         move_back_path = f"{meta_dir}/obstructing/Q{ratio}/G{G}"
-        os.makedirs(move_back_path+"/points", exist_ok=True)
+
+        if not os.path.exists(f"{move_back_path}/points"):
+            os.makedirs(f"{move_back_path}/points", exist_ok=True)
+
         np.savetxt(f'{move_back_path}/points/{shape}_back_standby.txt', standbys, fmt='%d', delimiter=' ')
 
 
@@ -246,19 +264,19 @@ if __name__ == "__main__":
     # We assume the user walk as a circle, centering the center of the shape.
     # Each time, the user will walk and the vector pointing from the center of the shape toward the user's eye will form
     # a {granularity} degree angle with the previous one.
-    granularity = 45  # the granularity of degree changes.
+    granularity = 10  # the granularity of degree changes.
 
-    Q_list = [3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.
+    Q_list = [1, 3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.
 
 
     # Select these base on the group formation you have, see '../assets/pointclouds'
     G_list = [3, 20]  # This is the size of group constructed by the group formation technique that you would like to test.
     shape_list = ["skateboard", "dragon", "hat"]  # This is the list of shape to run this on
 
-    for illum_to_disp_ratio in Q_list:
-        for G in G_list:
-            for shape in shape_list:
-                calculate_obstructing_omnidegree(ptcld_folder, meta_dir, illum_to_disp_ratio, G, shape, granularity)
+    # for illum_to_disp_ratio in Q_list:
+    #     for G in G_list:
+    #         for shape in shape_list:
+    #             calculate_obstructing_omnidegree(ptcld_folder, meta_dir, illum_to_disp_ratio, G, shape, granularity)
 
     for illum_to_disp_ratio in Q_list:
         for G in G_list:

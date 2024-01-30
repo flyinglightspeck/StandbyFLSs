@@ -337,6 +337,9 @@ def calculate_single_view(shape, G, ratio, view, points, camera, output_path):
     blocked_by = np.array(blocked_by)
     np.unique(blocked_by, axis=0)
 
+    if not os.path.exists(f"{output_path}/points"):
+        os.makedirs(f"{output_path}/points", exist_ok=True)
+
     np.savetxt(f'{output_path}/points/{shape}_{view}_visible_illum.txt', visible_illum, fmt='%f',
                delimiter=' ')
     np.savetxt(f'{output_path}/points/{shape}_{view}_visible_standby.txt', visible_standby,
@@ -408,6 +411,9 @@ def calculate_obstructing(group_file, meta_direc, ratio, G, shape):
 
     illum = np.array(illum)
     standby = np.array(standby)
+
+    if not os.path.exists(f"{output_path}/points"):
+        os.makedirs(f"{output_path}/points", exist_ok=True)
 
     np.savetxt(f'{output_path}/points/{shape}_illum.txt', illum, fmt='%f', delimiter=' ')
     np.savetxt(f'{output_path}/points/{shape}_standby.txt', standby, fmt='%f', delimiter=' ')

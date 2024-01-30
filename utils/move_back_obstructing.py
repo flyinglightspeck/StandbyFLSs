@@ -68,7 +68,13 @@ def solve_single_view(shape, G, ratio, view, lastview, user_eye, group_file, out
 
     txt_file = f"{shape}.txt"
     standby_file = f"{shape}{lastview}_standby.txt"
-    points, boundary, standbys = get_points_from_file(ratio, group_file, output_path, txt_file, standby_file)
+
+    try:
+        points, boundary, standbys = get_points_from_file(ratio, group_file, output_path, txt_file, standby_file)
+    except Exception as e:
+        print("File Doesn't Generated Yet, Re-generating")
+        points, boundary, standbys, _ = get_points(shape, G, group_file, ratio)
+
     if not test:
         ori_dists_center = get_dist_to_centroid(standbys[:, 0:3], shape, G, group_file, ratio)
     else:
@@ -82,6 +88,9 @@ def solve_single_view(shape, G, ratio, view, lastview, user_eye, group_file, out
     blocked_by = read_coordinates(f"{output_path}/points/{shape}_{view}_blocked.txt", ' ')
 
     if len(obstructing) == 0:
+
+        if not os.path.exists(f"{output_path}/points"):
+            os.makedirs(f"{output_path}/points", exist_ok=True)
         np.savetxt(f'{output_path}/points/{shape}_{view}_standby.txt', standbys, fmt='%f', delimiter=' ')
         metrics = [shape, G, ratio, view, 0, 0, 0,
                    0, 0, 0,
@@ -218,6 +227,8 @@ def solve_single_view(shape, G, ratio, view, lastview, user_eye, group_file, out
 
         change_mapping[origin_illum_index] = obs_list[obstructing_index]
 
+    if not os.path.exists(f"{output_path}/points"):
+        os.makedirs(f"{output_path}/points", exist_ok=True)
     np.savetxt(f'{output_path}/points/{shape}_{view}_{file_surfix}.txt', standbys, fmt='%f', delimiter=' ')
 
     if not test:
