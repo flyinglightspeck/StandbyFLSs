@@ -714,7 +714,7 @@ def suspend_hide(file_path, ptcld_folder, granularity, shape, speed, ratio, G, s
 
 if __name__ == "__main__":
 
-    figure_path = "./assets/obstructing"
+    figure_path = "../assets/obstructing"
     if not os.path.exists(figure_path):
         os.makedirs(figure_path, exist_ok=True)
 
