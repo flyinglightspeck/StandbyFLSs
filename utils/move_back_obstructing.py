@@ -275,11 +275,11 @@ def solve_obstructing(group_file, meta_direc, ratio, G_list, shape_list):
         "Min Dist To Center", "Max Dist To Center", "Avg Dist To Center", "MTID",
         "Dist To Center Change", "MTID Change", "Obstructing Nums"]
     result = [title]
+    report_path = f"{meta_direc}/obstructing/Q{ratio}"
+    if not os.path.exists(report_path):
+        os.makedirs(report_path, exist_ok=True)
 
     for G in G_list:
-        report_path = f"{meta_direc}/obstructing/Q{ratio}"
-        if not os.path.exists(report_path):
-            os.makedirs(report_path, exist_ok=True)
 
         output_path = f"{meta_direc}/obstructing/Q{ratio}/G{G}"
         if not os.path.exists(output_path):
