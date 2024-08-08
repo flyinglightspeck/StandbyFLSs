@@ -310,3 +310,26 @@ Then run `./utils/solve_obstruction.py` with the same configurations.
 Plots showing those results will be generated in corresponding repositories.
 
 ![](assets/figures/Workflow_Suspend_Dissolve_hide.png)
+
+## Citations
+
+Hamed Alimohammadzadeh, Shuqin Zhu, Jiadong Bai, and Shahram Ghandeharizadeh. 2024. Reliability Groups with Standby Flying Light Specks. In Proceedings of the 15th ACM Multimedia Systems Conference (MMSys '24). Association for Computing Machinery, New York, NY, USA, 1–11. https://doi.org/10.1145/3625468.3647606
+
+```
+@inproceedings{10.1145/3625468.3647606,
+author = {Alimohammadzadeh, Hamed and Zhu, Shuqin and Bai, Jiadong and Ghandeharizadeh, Shahram},
+title = {Reliability Groups with Standby Flying Light Specks},
+year = {2024},
+isbn = {9798400704123},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3625468.3647606},
+doi = {10.1145/3625468.3647606},
+abstract = {A Flying Light Speck, FLS, is a miniature sized drone configured with light sources to illuminate different colors and textures. A swarm of FLSs illuminates complex 3D multimedia shapes in a fixed volume, a 3D display. An FLS is a mechanical device. Its failure is the norm rather than an exception, causing a point of an illumination to go dark. In this paper, we use reliability groups with dark standby FLSs to minimize the duration of time a point remains dark. This study makes two novel contributions. First, it compares a centralized and a decentralized algorithm to form groups, demonstrating the superiority of the centralized technique. Second, it detects when the dark standby FLSs may obstruct the user's field of view and relocates them with minimal impact on their provided benefit.},
+booktitle = {Proceedings of the 15th ACM Multimedia Systems Conference},
+pages = {1–11},
+numpages = {11},
+location = {Bari, Italy},
+series = {MMSys '24}
+}
+```
