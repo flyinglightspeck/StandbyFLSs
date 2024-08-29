@@ -1,3 +1,4 @@
+import argparse
 import csv
 import os
 import statistics
@@ -5,7 +6,7 @@ import math
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-import multiprocessing as mp
+from collections import Counter
 import matplotlib.pyplot as plt
 
 
@@ -107,7 +108,9 @@ def get_distance(point1, point2):
 
 
 def ray_cell_intersection(origin, direction, point, ratio, is_standby):
-    """Check if a ray intersects with a cube."""
+    """
+    Checks if a ray intersects with a cube. Algorithm 1.
+    """
     # Cube dimensions
     if is_standby:
         half_size = 0.5
@@ -357,7 +360,7 @@ def calculate_single_view(shape, G, ratio, view, points, camera, output_path):
     return metric
 
 
-def calculate_obstructing(group_file, meta_direc, ratio, G, shape):
+def six_view_detect_obstructing_flss(file_folder, meta_direc, ratio, G, shape):
     result = [
         ["Shape", "G", "Ratio", "View", "Visible_Illum", "Obstructing FLS", "Min Times Checked",
          "Mean Times Checked",
@@ -471,18 +474,260 @@ def calculate_obstructing(group_file, meta_direc, ratio, G, shape):
             writer.writerow(row)
 
 
-if __name__ == "__main__":
+def rotate_vector(vector, angle_degrees):
+    # Convert angle to radians
+    angle_radians = np.radians(angle_degrees)
 
+    pivot = [0, 0, 1]
+
+    # Rotation matrix for z-axis rotation
+    rotation_matrix = np.array([[np.cos(angle_radians), -np.sin(angle_radians), 0],
+                                [np.sin(angle_radians), np.cos(angle_radians), 0],
+                                [0, 0, 1]])
+
+    # Translate vector to origin (subtract pivot), rotate, then translate back (add pivot)
+    rotated_vector = np.dot(rotation_matrix, np.array(vector) - np.array(pivot)) + pivot
+
+    return rotated_vector
+
+
+def detect_obstructing_fls(user_eye, points, ratio, standbys):
+    """
+    Implements Algorithm 2
+    """
+    potential_blocking_index = []
+
+    num_of_standby = 0
+    num_of_illum = 0
+
+    for point in points:
+        if point[3] == 1:
+            num_of_standby += 1
+        else:
+            num_of_illum += 1
+
+    obstructing_list = [0 for _ in range(0, num_of_standby)]
+
+    distances = [get_distance(user_eye, point[:3]) for point in points]
+    sorted_indices = np.argsort(distances)
+    distances.sort()
+
+    obstructing_coord = []
+    blocked_coord = []
+    blocking_index = []
+
+    for index_dist in tqdm(range(len(sorted_indices))):
+        p_index = sorted_indices[index_dist]
+
+        if points[p_index][3] == 0:
+            continue
+
+        cell_center = points[p_index][0:3]
+        vertices = get_vertices(cell_center, points[p_index][3], ratio)
+
+        checklist_end = index_dist
+        if points[p_index][3]:
+            while (distances[checklist_end] - distances[index_dist]) < ratio / 2 and checklist_end < len(distances) - 1:
+                checklist_end += 1
+
+        check_list = sorted_indices[:checklist_end]
+
+        is_visible = [True for _ in range(len(vertices))]
+        possible_visible = [True for _ in range(len(vertices))]
+
+        b_list = []
+
+        for v_index, vertex in enumerate(vertices):
+
+            direction = (vertex - user_eye)
+            direction /= np.linalg.norm(direction)
+            direction[direction == 0] = 1e-10
+
+            for check_index in check_list:
+                if p_index == check_index:
+                    continue
+
+                point = points[check_index]
+
+                if ray_cell_intersection(user_eye, direction, point[0:3], ratio, point[3]):
+                    is_visible[v_index] = False
+                    if point[3] == 0:
+                        possible_visible[v_index] = False
+                        break
+                    else:
+                        b_list.append(check_index)
+
+        is_obstruct = False
+
+        if points[p_index][3] and any(possible_visible):
+            for v_index, vertex in enumerate(vertices):
+
+                direction = (vertex - user_eye)
+                direction /= np.linalg.norm(direction)
+                direction[direction == 0] = 1e-10
+
+                for check_index in sorted_indices[index_dist:]:
+                    if p_index == check_index:
+                        continue
+
+                    point = points[check_index]
+
+                    if point[3] != 1 and ray_cell_intersection(user_eye, direction, point[0:3], ratio,
+                                                               point[3]) and p_index not in potential_blocking_index:
+
+                        obstructing_coord.append(points[p_index][0:3])
+                        blocked_coord.append(point[0:3])
+                        potential_blocking_index.append(p_index)
+
+                        if any(is_visible):
+                            is_obstruct = True
+                            blocking_index.append(p_index)
+                        break
+        obstructing_list[p_index - num_of_illum] = is_obstruct
+        # print(f"Ori:{standbys[p_index - num_of_illum]}, GT:{points[p_index][0:3]}")
+
+    return obstructing_list, obstructing_coord, blocked_coord
+
+
+def walk_around_detect_obstructing_flss(ptcld_folder, meta_direc, ratio, G, shape, granularity, write_output=True):
+    # fig = plt.figure()
+    # ax = fig.add_subplot(projection='3d')
+
+    output_path = f"{meta_direc}/obstructing/Q{ratio}/G{G}"
+    if not os.path.exists(output_path):
+        os.makedirs(output_path, exist_ok=True)
+
+    txt_file = f"{shape}.txt"
+
+    try:
+        standby_file = f"{shape}_standby.txt"
+        points, boundary, standbys = get_points_from_file(ratio, ptcld_folder, output_path, txt_file, standby_file)
+    except Exception as e:
+        print("File Doesn't Generated Yet, Re-generating")
+        points, boundary, standbys, _ = get_points(shape, G, ptcld_folder, ratio)
+
+    np.savetxt(f'{output_path}/points/{shape}_standby.txt', standbys, fmt='%f', delimiter=' ')
+    user_shifting = 100
+
+    user_pos = [boundary[0][0] / 2 + boundary[1][0] / 2, boundary[0][1] - user_shifting,
+                boundary[0][2] / 2 + boundary[1][2] / 2]
+
+    shape_center = [boundary[0][0] / 2 + boundary[1][0] / 2, boundary[0][1] / 2 + boundary[1][1] / 2,
+                    boundary[0][2] / 2 + boundary[1][2] / 2]
+
+    vector = np.array(user_pos) - np.array(shape_center)
+
+    degree_obst_map = dict()
+
+    for i in range(0, math.floor(360 / granularity)):
+        try:
+            points, boundary, standbys = get_points_from_file(ratio, ptcld_folder, output_path, txt_file, standby_file)
+        except Exception as e:
+            points, boundary, standbys, _ = get_points(shape, G, ptcld_folder, ratio)
+
+        angle = i * granularity
+
+        user_pos = shape_center + rotate_vector(vector, angle)
+        # ax.scatter(*user_pos)
+
+        print(f"START: {shape}, G: {G}, Ratio: {ratio}, Angle:{angle}")
+
+        obstructing_list, obstructing_coord, blocked_coord = detect_obstructing_fls(user_pos, points, ratio, standbys)
+
+        if not os.path.exists(f"{output_path}/points"):
+            os.makedirs(f"{output_path}/points", exist_ok=True)
+
+        if write_output:
+            np.savetxt(f'{output_path}/points/{shape}_{granularity}_{i}.txt', obstructing_list, fmt='%d', delimiter=' ')
+
+        np.savetxt(f'{output_path}/points/{shape}_{granularity}_{i}_blocking.txt', obstructing_coord, fmt='%f',
+                   delimiter=' ')
+        np.savetxt(f'{output_path}/points/{shape}_{granularity}_{i}_blocked.txt', blocked_coord, fmt='%f',
+                   delimiter=' ')
+
+        print(
+            f"{shape}, G: {G}, Ratio: {ratio} ,view: {angle}, Number of Illuminating FLS: {Counter(obstructing_list)}")
+
+        degree_obst_map[angle] = obstructing_list
+
+    return degree_obst_map
+    # plt.show()
+
+
+def closest_points(A, B):
+    """
+    Find the closest point in B to each point in A.
+
+    Parameters:
+    A (numpy array): an array of 3D coordinates.
+    B (numpy array): another array of 3D coordinates.
+
+    Returns:
+    numpy array: an array of the closest points in B for each point in A.
+    """
+    closest_indices = np.argmin(np.linalg.norm(A[:, np.newaxis] - B, axis=2), axis=1)
+    return B[closest_indices]
+
+
+def read_obstruction_maps(output_path, shape, granularity):
+    maps =[]
+    for i in range(360 // granularity):
+        maps.append(np.loadtxt(f'{output_path}/points/{shape}_{granularity}_{i}.txt'))
+
+    return np.sum(maps, axis=0)
+
+
+def run_six_view_obstruction_detection():
     file_folder = "../assets/pointcloud"
     meta_dir = "../assets"
 
     Q_list = [1, 3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.
 
     # Select these base on the group formation you have, see '../assets/pointclouds'
-    G_list = [3, 20]  # This is the size of group constructed by the group formation technique that you would like to test.
+    G_list = [3,
+              20]  # This is the size of group constructed by the group formation technique that you would like to test.
     shape_list = ["skateboard", "dragon", "hat"]  # This is the list of shape to run this on
 
     for illum_to_disp_ratio in Q_list:
         for G in G_list:
             for shape in shape_list:
-                calculate_obstructing(file_folder, meta_dir, illum_to_disp_ratio, G, shape)
+                six_view_detect_obstructing_flss(file_folder, meta_dir, illum_to_disp_ratio, G, shape)
+
+
+def run_walk_around_obstruction_detection():
+    ptcld_folder = "../assets/pointcloud"
+    meta_dir = "../assets"
+
+    # We assume the user walk as a circle, centering the center of the shape.
+    # Each time, the user will walk and the vector pointing from the center of the shape toward the user's eye will form
+    # a {granularity} degree angle with the previous one.
+    granularity = 10  # the granularity of degree changes.
+
+    Q_list = [1, 3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.
+
+    # Select these base on the group formation you have, see '../assets/pointclouds'
+    G_list = [3,
+              20]  # This is the size of group constructed by the group formation technique that you would like to test.
+    shape_list = ["skateboard", "dragon", "hat"]  # This is the list of shape to run this on
+
+    for illum_to_disp_ratio in Q_list:
+        for G in G_list:
+            for shape in shape_list:
+                walk_around_detect_obstructing_flss(ptcld_folder, meta_dir, illum_to_disp_ratio, G, shape, granularity)
+
+
+if __name__ == "__main__":
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument(
+        "--six-view",
+        action="store_true",
+        help="Use six fixed views to detect obstructions. If not provided, will use views of a user who is walking around the shape."
+    )
+
+    args = arg_parser.parse_args()
+
+    if args.six_view:
+        run_six_view_obstruction_detection()
+    else:
+        run_walk_around_obstruction_detection()
+

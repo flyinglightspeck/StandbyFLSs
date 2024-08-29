@@ -6,7 +6,7 @@ from matplotlib.ticker import PercentFormatter
 
 from move_back_obstructing import *
 from standby_or_dispatcher import distance_point_to_line
-from obstructing_prevention import rotate_vector, closest_points, read_obstruction_maps
+from prevent_obstructing import rotate_vector, closest_points, read_obstruction_maps
 
 mpl.rcParams['font.family'] = 'Times New Roman'
 

@@ -12,7 +12,7 @@ Authors:  Hamed Alimohammadzadeh(halimoha@usc.edu), Shuqin Zhu (shuqinzh@usc.edu
    * Both illuminating and standby FLSs may fail either mid-flight to their destination or once at their destination.
    * A configurable simulation model to quantify the Quality of Illumination (QoI) as a function of time for a point cloud.  Each FLS is modeled as a process.  With large point cloudes (FLSs), the simulator scales horizontally to run across multiple servers.
    * Detection of obstructing dark standby FLSs.
-   * Two techniques to eliminate dark standby FLSs from obstructing the user field of view:  Dissolve and Suspend.
+   * Four techniques to eliminate dark standby FLSs from obstructing the user field of view:  Dissolve, Suspend (2 variants), Transpose.
    * Visualizes results by providing a histogram of the group sizes, box plot of distance from the center of a group to the group members, average distance from a dispatcher to group centroid
 
 # Limitations
@@ -22,7 +22,10 @@ Authors:  Hamed Alimohammadzadeh(halimoha@usc.edu), Shuqin Zhu (shuqinzh@usc.edu
 # Clone
 `git clone https://github.com/flslab/FailureHandling.git`
 
-# Running using Venv
+# Set up
+Follow either of the following subsections to set up the environment and install the dependencies.
+
+## Set up using Venv
 This software was implemented and tested using Python 3.9.0.
 
 We recommend using PyCharm, enabling the software to run across mutliple operating systems, e.g., Windows, MacOS, etc.
@@ -52,27 +55,17 @@ env/Scripts/Activate.ps1 //In Powershel
 You can deactivate the virtual environment by running `deactivate` in the terminal.
 
 
-## Set Up Local
-Run `bash setup.sh` to set up everything.
+## Set up without venv
+Run `bash setup.sh` to install dependencies without creating a virtual environment.
 
-If anything went wrong with the bash command, simply run `pip3 install -r requirements.txt` in the root directory. If you are using IDE like PyCharm, you can download all the requirements with it.
+If anything went wrong with the bash command, make sure you have installed python3 and pip3 then run `pip3 install -r requirements.txt` in the root directory of the project. If you are using IDE like PyCharm, you can download all the requirements with it.
 We recommend the use of PyCharm for running this software on a single laptop or server for evaluation purposes.
 By installing and using PyCharm, the single server version of software will execute on a wide range of operating systems ranging from macOS to Windows.  
 
-
-# MTID
-The program `./utils/mtid.py` implements analytical models to compute the MTID for a collection of 3D point clouds (shapes) with different reliability groups.  
-The reliability groups may be computed using an algorithms such as k-Means or CANF.  
-More formally, `./utils/mtid.py` assumes:
-   * A text file that describes the 3D coordinates of a point cloud.  We provide several point clouds in `./assets/pointcloud`: dragon.txt, hat.txt, and skateboard.txt.  The variable `shapes` defines the point clouds that the program iterates.
-   * A .xlsx file that describes a reliability group computed for a shape using a grouping algorithm with a pre-specified group size.  The name of a file is [shape]\_[grouping algorithm]\_[group size].xlsx.  `shape` is from the previous bullet, a user specified identifier for a grouping algorithm, e.g., `K` for k-Means, a value for group size, e.g., 3.  In `./assets/pointcloud`, we provide files for the alternative shapes of the previous bullet, K-Means and CANF, and group sizes of {3, 5, 10, 20}.  These files were computed separately and placed in the `./assets/pointcloud` for use by `./utils/mtid.py`.  They ensure MTID is independent of an algorithm that computes a reliability group, enabling its application to all possible grouping algorithms.
-     (Group Centroids, where standby FLSs should be positioned, are calculated using the reliability groups from this file)
-
-The output of executing `./utils/mtid.py` includes:
-   * `./assets/mtid_report.csv` contains the minimum, median, and maximum MTID.  It also computes other essential stats such as the minimum, median, and maximum distance of a standby at the center of a group to each group member. This information is reported for each shape, grouping algorithm, and group size.  This is a row of `./assets/mtid_report.csv` file.
-   * `./assets/figures` contains a listing of figures for the different shapes, grouping algorithms, and group sizes.  These figures show MTID, a histogram of group sizes constructed by a grouping algorithm, among others.
-
-![](assets/figures/Workflow_MTID.png)
+# Emulator
+This software include a scalable emulator of FLSs described in Appendix A. It emulates operation of multiple FLSs to illuminate a 3d point cloud by running parallel processes.  
+It consists three types of processes, Orchestrator, Secondary, and FLS processes. Orchestrator and Secondary processes are artifacts that facilitate running a large number of FLS processes across different servers of a datacenter. FLS processes implements functionalities and characteristics of an FLS such as flying, communicating, and failing.
+Point clouds with small number of points can be run locally on a single machine while with larger number of points multiple machines with multiple cores are required.
 
 ## Run Local
 
@@ -200,7 +193,9 @@ In a Dronevision/FLS Display context, this should be the information from the or
 | max_delay        | Overall max delay for FLSs dispatched by each dispatcher After initial FLSs dispatched      |
 | avg_delay        | Overall average delay for FLSs dispatched by each dispatcher After initial FLSs dispatched  |
 
-## Analytical Models
+# Analytical Models
+
+## Velocity Model
 The movement of FLSs are calculated using the velocity model. We suppose all FLSs have the same maximum speed, maximum acceleration and deceleration.
 FLS will start from a speed of 0, and will always accelerate to a max speed if it can.
 When an FLS is approaching its destination, it will decelerate with max deceleration and come to a halt at its destination.
@@ -234,12 +229,29 @@ Each of these time is the time traveled for an FLS to arrive at the illuminating
 | Median  Dist To Centroid | Median distance from each point to its group centroid.                                                                        |
 | Max Dist To Centroid     | Maximum distance from each point to its group centroid.                                                                       |
 
+## MTID
+The program `./utils/mtid.py` implements analytical models to compute the MTID for a collection of 3D point clouds (shapes) with different reliability groups.  
+The reliability groups may be computed using an algorithms such as k-Means or CANF.  
+More formally, `./utils/mtid.py` assumes:
+   * A text file that describes the 3D coordinates of a point cloud.  We provide several point clouds in `./assets/pointcloud`: dragon.txt, hat.txt, and skateboard.txt.  The variable `shapes` defines the point clouds that the program iterates.
+   * A .xlsx file that describes a reliability group computed for a shape using a grouping algorithm with a pre-specified group size.  The name of a file is [shape]\_[grouping algorithm]\_[group size].xlsx.  `shape` is from the previous bullet, a user specified identifier for a grouping algorithm, e.g., `K` for k-Means, a value for group size, e.g., 3.  In `./assets/pointcloud`, we provide files for the alternative shapes of the previous bullet, K-Means and CANF, and group sizes of {3, 5, 10, 20}.  These files were computed separately and placed in the `./assets/pointcloud` for use by `./utils/mtid.py`.  They ensure MTID is independent of an algorithm that computes a reliability group, enabling its application to all possible grouping algorithms.
+     (Group Centroids, where standby FLSs should be positioned, are calculated using the reliability groups from this file)
 
-## Obstructing FLS **Detection**
-Standby FLSs show remain dark while waiting to recover failed FLSs. Thus, it may block some other illuminating FLSs and diminish the user's immersive experience.
-The program `./utils/obstructing_detection.py` implements analytical models to detect obstructing standby FLSs.  
-`./utils/obstructing_detection.py` assumes:
-   * User is standing 100 display cells from the boundary of the shape, looking at the shape from six views: [front, back, top, bottom, left, right]. We assume the user's eyes position is known.
+The output of executing `./utils/mtid.py` includes:
+   * `./assets/mtid_report.csv` contains the minimum, median, and maximum MTID.  It also computes other essential stats such as the minimum, median, and maximum distance of a standby at the center of a group to each group member. This information is reported for each shape, grouping algorithm, and group size.  This is a row of `./assets/mtid_report.csv` file.
+   * `./assets/figures` contains a listing of figures for the different shapes, grouping algorithms, and group sizes.  These figures show MTID, a histogram of group sizes constructed by a grouping algorithm, among others.
+
+![](assets/figures/Workflow_MTID.png)
+
+## Obstructing FLS Detection
+Standby FLSs remain dark while waiting to recover failed FLSs. Thus, it may block some other illuminating FLSs and diminish the user's immersive experience.
+The program `./utils/detect_obstruction.py` implements analytical models to detect obstructing standby FLSs. It has two variants:
+   * One assumes the user is looking at the shape from six views: [front, back, top, bottom, left, right]. To use this variant run `./utils/detect_obstruction.py --six-view`.
+   * The other assumes the user is walking around the shape on a circle while looking at the shape. To use this variant run `./utils/detect_obstruction.py` without arguments.
+
+`./utils/detect_obstruction.py` assumes:
+
+[//]: # (   * User is standing 100 display cells from the boundary of the shape, looking at the shape from six views: [front, back, top, bottom, left, right]. We assume the user's eyes position is known.)
    * A text file that describes the 3D coordinates of a point cloud.  We provide several point clouds in `./assets/pointcloud`: dragon.txt, hat.txt, and skateboard.txt.  The variable `shapes` defines the point clouds that the program iterates.
    * A .xlsx file that describes a reliability group computed for a shape using a grouping algorithm with a pre-specified group size. 
 The name of a file is [shape]\_[grouping algorithm]\_[group size].xlsx.  `shape` is from the previous bullet, a user specified identifier for a grouping algorithm, e.g., `K` for k-Means, a value for group size, e.g., 3.  
@@ -247,65 +259,90 @@ In `./assets/pointcloud`, we provide files for the alternative shapes of the pre
 (Same as the description in Section MTID. Group Centroids, where standby FLSs should be positioned, are calculated using the reliability groups from this file)
    * Specified Illumination Cell to Display Cell Ratio, `Q`. This defined the size of an illumination Cell.
 
-The output of executing `./utils/obstructing_detection.py` includes:
+The output of executing `./utils/detect_obstruction.py` includes:
    * `./assets/Obstructing/Q[value of Q]/G[Group Size]/` contain lists of text files, that recorded coordinates all standby FLSs, coordinates of obstructing standby FLSs, coordinates of illuminating FLSs blocked by them, coordinates of standby FLSs that are visible to human eyes, and coordinates of illuminating FLSs that are visible to human eyes.
    * `./assets/Obstructing/Q[value of Q]/report_Q[value of Q]_G[Group Size]_[shape].csv` contain numbers of visible illuminating FLSs,  numbers of obstructing FLSs, Min/Avg/Max Time checked for an available (not overlapping with any other FLSs) location for standby FLSs.
-This information is reported for each shape, group size, Q and view (include six views, [front, back, top, bottom, left, right]).  This is a row of the report file.
+This information is reported for each shape, group size, Q and view or angle depending on the variant (include six views, [front, back, top, bottom, left, right] or a tuple indicating granularity and step number).  This is a row of the report file.
 
 ![](assets/figures/Workflow_Obstructing_Detection.png)
 
-### Move Back Obstructing FLSs to solve obstruction
+[//]: # (### Move Back Obstructing FLSs to solve obstruction)
 
-To solve obstruction detected from a view, a simple way is to move back obstructing standby FLSs along the user's gaze ray, replacing illuminating FLSs that they were blocking.
-Previous blocked illuminating FLSs will move back slightly, hide behind new illuminating FLSs, and become new standby FLSs.
+[//]: # ()
+[//]: # (To solve obstruction detected from a view, a simple way is to move back obstructing standby FLSs along the user's gaze ray, replacing illuminating FLSs that they were blocking.)
 
-The program `./utils/move_back_obstructing.py` implements the technique to move obstructing standby FLSs back. 
-`./utils/move_back_obstructing.py` assumes:
-   * User's View
-   * A text file that describes the 3D coordinates of a point cloud. We provide several point clouds in `./assets/pointcloud`.
-   * A text file that describes standby FLSs' coordinates for current reliability groups. These file should be generated by `./utils/obstructing_detection.py`, can be found in `./assets/Obstructing/Q[value of Q]/report_Q[value of Q]_G[Group Size]_[shape].csv`.
-   * Specified Illumination Cell to Display Cell Ratio, `Q`. This defined the size of an illumination Cell.
+[//]: # (Previous blocked illuminating FLSs will move back slightly, hide behind new illuminating FLSs, and become new standby FLSs.)
 
-The output of executing `./utils/obstructing_detection.py` includes:
-   * `./assets/Obstructing/Q[value of Q]/solve_Q{[value of Q].csv` contain the Min/Avg/Max distance traveled by the obstructing FLS and illuminating FLS;
-the initial distance between the obstructing FLS and illuminating FLS;
-number of obstructing FLSs blocking a single illuminating FLS;
-Min/Avg/Max distance from original and new standby FLSs' position to the center of the group that they were assigned with;
-Min/Avg/Max original and new MTIDs, which are average time for each standby FLS to recover failure in their group.
-   * `./assets/Obstructing/Q[value of Q]/G[Group Size]/` contain numbers of visible illuminating FLSs,  numbers of obstructing FLSs, Min/Avg/Max Time checked for an available (not overlapping with any other FLSs) location for standby FLSs.
-This information is reported for each shape, group size, Q and view (include six views, [front, back, top, bottom, left, right]).  This is a row of the report file.
+[//]: # ()
+[//]: # (The program `./utils/move_back_obstructing.py` implements the technique to move obstructing standby FLSs back. )
 
-To solve obstruction detected from all views as a whole process, run `./utils/move_back_all_views.py`.
-Starting from the first view, obstructing standby FLSs detected from this view will be moved back, then those detected from the next view.
-Do this for all six views, and report same metrics as previous.
+[//]: # (`./utils/move_back_obstructing.py` assumes:)
+
+[//]: # (   * User's View)
+
+[//]: # (   * A text file that describes the 3D coordinates of a point cloud. We provide several point clouds in `./assets/pointcloud`.)
+
+[//]: # (   * A text file that describes standby FLSs' coordinates for current reliability groups. These file should be generated by `./utils/detect_obstruction.py`, can be found in `./assets/Obstructing/Q[value of Q]/report_Q[value of Q]_G[Group Size]_[shape].csv`.)
+
+[//]: # (   * Specified Illumination Cell to Display Cell Ratio, `Q`. This defined the size of an illumination Cell.)
+
+[//]: # ()
+[//]: # (The output of executing `./utils/detect_obstruction.py` includes:)
+
+[//]: # (   * `./assets/Obstructing/Q[value of Q]/solve_Q{[value of Q].csv` contain the Min/Avg/Max distance traveled by the obstructing FLS and illuminating FLS;)
+
+[//]: # (the initial distance between the obstructing FLS and illuminating FLS;)
+
+[//]: # (number of obstructing FLSs blocking a single illuminating FLS;)
+
+[//]: # (Min/Avg/Max distance from original and new standby FLSs' position to the center of the group that they were assigned with;)
+
+[//]: # (Min/Avg/Max original and new MTIDs, which are average time for each standby FLS to recover failure in their group.)
+
+[//]: # (   * `./assets/Obstructing/Q[value of Q]/G[Group Size]/` contain numbers of visible illuminating FLSs,  numbers of obstructing FLSs, Min/Avg/Max Time checked for an available &#40;not overlapping with any other FLSs&#41; location for standby FLSs.)
+
+[//]: # (This information is reported for each shape, group size, Q and view &#40;include six views, [front, back, top, bottom, left, right]&#41;.  This is a row of the report file.)
+
+[//]: # ()
+[//]: # (To solve obstruction detected from all views as a whole process, run `./utils/move_back_all_views.py`.)
+
+[//]: # (Starting from the first view, obstructing standby FLSs detected from this view will be moved back, then those detected from the next view.)
+
+[//]: # (Do this for all six views, and report same metrics as previous.)
 
 
+[//]: # (## Obstructing FLS Prevention)
 
-## Obstructing FLS **Prevention**
-To run a detection, run `./utils/obstructing_prevention.py`.
-Specify the configuration and shapes to check in the file, instructions can be found in comments.
+[//]: # (To run a detection, run `./utils/obstructing_prevention.py`.)
 
-The output can be found in `./assets/obstructing/`, based on your setting, there will be directories generated.
-The result will report the number of obstructing FLSs user will see if the user walk around the shape (as a circle), centering the center of the shape. 
-Each time, the user will walk and the vector pointing from the center of the shape toward the user's eye will form a {granularity} degree angle with the previous one.
+[//]: # (Specify the configuration and shapes to check in the file, instructions can be found in comments.)
 
-After recording all obstructing information, those obstructing FLSs will look for closest illuminating FLS, and hide inside its illumination cell (if Q > 3).
+[//]: # ()
+[//]: # (The output can be found in `./assets/obstructing/`, based on your setting, there will be directories generated.)
+
+[//]: # (The result will report the number of obstructing FLSs user will see if the user walk around the shape &#40;as a circle&#41;, centering the center of the shape. )
+
+[//]: # (Each time, the user will walk and the vector pointing from the center of the shape toward the user's eye will form a {granularity} degree angle with the previous one.)
+
+[//]: # (After recording all obstructing information, those obstructing FLSs will look for closest illuminating FLS, and hide inside its illumination cell &#40;if Q > 3&#41;.)
 
 
-## Dissolve, Suspend and Hide
+## Dissolve, Suspend and Transpose
 Obstructing FLSs needs to be hidden from user's Field of View (FoV).
-We have proposed two techniques: dissolve and suspend.
-Dissolve will permanently dissolve reliability groups that have standby FLSs obstructing user's FoV.
+We have proposed four techniques: dissolve, suspend (2 variants), and transpose. `./utils/solve_obstruction.py` includes the implementation of techniques presented in Section 6.
+
+Dissolve will permanently dissolve reliability groups that have standby FLSs obstructing user's FoV. `dissolve` function implements Algorithm 3.
+
 Suspend will temporarily dissolve reliability groups that have standby FLSs obstructing user's FoV, 
 and these groups will be restored once their standby FLSs are no longer in user's FOV.
+One variant of suspend requires the obstructing standby FLS to move back to the hangar when its reliability group is suspended. `suspend` function implements this variant (Algorithm 4).
+Another variant of suspend moves obstructing FLSs into illumination cells of the closest illuminating FLS. 
+ This option is only available when the Illumination Cell to Display Cell Ratio (Q) is no smaller than 3. It is implemented in `suspend_hide` function.
 
-Other solution to hide obstructing FLSs can be:
-1. Move obstructing FLSs back along the user's eye gaze, and make it replace blocked illuminating FLSs;
+Transpose moves obstructing FLSs back along the user's eye gaze, and make it replace blocked illuminating FLSs;
  while illuminating FLSs move back short distances and become new standby FLSs that hide behind. (As described in previous section.)
-2. Move obstructing FLSs into illumination cells of the closest illuminating FLS. 
- This option is only available when the Illumination Cell to Display Cell Ratio (Q) is no smaller than 3.
 
-To run this, first run `./utils/obstructing_prevention.py` to generate required obstruction information files.
+To run this, first run `./utils/detect_obstruction.py` to generate required obstruction information files.
 Then run `./utils/solve_obstruction.py` with the same configurations.
 Plots showing those results will be generated in corresponding repositories.
 
