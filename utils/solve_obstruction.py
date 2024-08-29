@@ -751,7 +751,7 @@ if __name__ == "__main__":
     # a {granularity} degree angle with the previous one.
     granularity_list = [10]  # the granularity of degree changes.
 
-    Q_list = [3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.
+    Q_list = [1, 3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.
 
     # Select these base on the group formation you have, see '../assets/pointclouds'
     # This is the size of group constructed by the group formation technique that you would like to test.
