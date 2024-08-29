@@ -1,3 +1,5 @@
+import logging
+
 import matplotlib as mpl
 from matplotlib.ticker import PercentFormatter
 
@@ -12,7 +14,7 @@ markers = ['s', 'v', 'o', 'x']
 Q_list = [1, 3, 5, 10]
 
 
-def hide_in_illumcell(ptcld_folder, meta_direc, ratio, G, shape, granularity):
+def hide_in_illumination_cell(ptcld_folder, meta_direc, ratio, G, shape, granularity):
     output_path = f"{meta_direc}/obstructing/Q{ratio}/G{G}"
 
     txt_file = f"{shape}.txt"
@@ -20,7 +22,7 @@ def hide_in_illumcell(ptcld_folder, meta_direc, ratio, G, shape, granularity):
         standby_file = f"{shape}_standby.txt"
         _, boundary, standbys = get_points_from_file(ratio, ptcld_folder, output_path, txt_file, standby_file)
     except Exception as e:
-        print("File Doesn't Generated Yet, Re-generating")
+        print("File isn't generated yet, regenerating")
         _, boundary, standbys, _ = get_points(shape, G, ptcld_folder, ratio)
 
     points = read_coordinates(f"{ptcld_folder}/{txt_file}", ' ')
@@ -149,10 +151,14 @@ def get_recover_distance(standbys, shape, G, ptcld_folder, ratio, obstructing_li
 
 
 def read_bools_from_file(file_path):
-    with open(file_path, 'r') as file:
-        # Read each line, strip whitespace, convert to int, and add to list
-        bool_list = [int(line.strip()) for line in file]
-    return bool_list
+    try:
+        with open(file_path, 'r') as file:
+            # Read each line, strip whitespace, convert to int, and add to list
+            bool_list = [int(line.strip()) for line in file]
+            return bool_list
+
+    except FileNotFoundError:
+        logging.error(f"File {file_path} not found. Please run obstruction_prevention.py to generate it.")
 
 
 def draw_change_plot(path, type, title_name, all_info, figure_name):
@@ -311,23 +317,23 @@ def draw_dissolved_percentage(granularity, removed_lists, total_groups, type, sa
     plt.close()
 
 
-def draw_MTID(granularity, origin_mtid, move_mtid, hide_mtid, save_path):
+def draw_MTID(granularity, original_mtid, transpose_mtid, suspend_hide_mtid, save_path):
     degrees = [i * granularity for i in range(0, math.floor(360 / granularity) + 1)]
-    origin_mtids = [origin_mtid for i in range(0, math.floor(360 / granularity) + 1)]
+    original_mtid = [original_mtid for i in range(0, math.floor(360 / granularity) + 1)]
 
     fig = plt.figure(figsize=(5, 3), layout='constrained')
 
-    plt.plot(degrees, move_mtid, marker=markers[2], markersize=4, c=colors[2], label=f'Transpose')
+    plt.plot(degrees, transpose_mtid, marker=markers[2], markersize=4, c=colors[2], label=f'Transpose')
 
-    if len(hide_mtid) >= 1:
-        plt.plot(degrees, hide_mtid, marker=markers[0], markersize=4, c=colors[0],
+    if len(suspend_hide_mtid) >= 1:
+        plt.plot(degrees, suspend_hide_mtid, marker=markers[0], markersize=4, c=colors[0],
                  label=f'Move to Closest Illuminating FLS')
-    plt.plot(degrees, origin_mtids, marker=markers[1], markersize=4, c=colors[1], label=f'With Obstructing Standby FLS')
+    plt.plot(degrees, original_mtid, marker=markers[1], markersize=4, c=colors[1], label=f'Obstructing FLS Present')
 
-    plt.text(60, 2.6, 'Obstructing FLS Present', color=colors[1], fontweight='bold', fontsize=12, zorder=3)
-    plt.text(10, 2.2, 'Move Standby to the Closest Illuminating FLS in the Group', color=colors[0], fontweight='bold',
+    plt.text(110, min(original_mtid) - 0.4, 'Obstructing FLS Present', color=colors[1], fontweight='bold', fontsize=12, zorder=3)
+    plt.text(80, min(suspend_hide_mtid) - .8, 'Hide in the Closest Illuminating FLS', color=colors[0], fontweight='bold',
              fontsize=12, zorder=3)
-    plt.text(10, 3.7, 'Transpose', color=colors[2], fontweight='bold', fontsize=12, zorder=3)
+    plt.text(150, max(transpose_mtid) + 0.2, 'Transpose', color=colors[2], fontweight='bold', fontsize=12, zorder=3)
 
     ax = plt.gca()
     ax.spines['right'].set_visible(False)
@@ -346,16 +352,16 @@ def draw_MTID(granularity, origin_mtid, move_mtid, hide_mtid, save_path):
     plt.close()
 
 
-def draw_dist_to_center(granularity, origin_dist, move_dist, hide_dist, save_path):
+def draw_dist_to_center(granularity, origin_dist, transpose_dist, suspend_hide_dist, save_path):
     degrees = [i * granularity for i in range(0, math.floor(360 / granularity) + 1)]
 
     fig = plt.figure(figsize=(5, 3), layout='constrained')
 
-    plt.plot(degrees, move_dist, marker=markers[2], markersize=4, c=colors[2],
-             label=f'Move to Obstructed Illuminating FLS')
-    plt.plot(degrees, hide_dist, marker=markers[0], markersize=4, c=colors[0],
-             label=f'Move to Closest Illuminating FLS')
-    plt.plot(degrees, origin_dist, marker=markers[1], markersize=4, c=colors[1], label=f'With None-ove Standby FLS')
+    plt.plot(degrees, transpose_dist, marker=markers[2], markersize=4, c=colors[2],
+             label=f'Transpose')
+    plt.plot(degrees, suspend_hide_dist, marker=markers[0], markersize=4, c=colors[0],
+             label=f'Hide in the Closest Illuminating FLS')
+    plt.plot(degrees, origin_dist, marker=markers[1], markersize=4, c=colors[1], label=f'Obstructing FLS Present')
 
     ax = plt.gca()
     ax.spines['right'].set_visible(False)
@@ -487,7 +493,7 @@ def dissolve(figure_path, file_path, ptcld_folder, granularity, shape, speed, ra
 
 def suspend(figure_path, file_path, ptcld_folder, granularity, shape, speed, ratio, G):
     """
-    Implements suspend technique of Section 6.3
+    Implements suspend (move to hangar) technique of Section 6.3
     """
     print(f"Suspend: {shape}, G:{G}, Q:{ratio}")
     max_speed = max_acceleration = max_deceleration = speed
@@ -647,6 +653,9 @@ def transpose(file_path, ptcld_folder, granularity, shape, speed, ratio, G, solv
 
 
 def suspend_hide(file_path, ptcld_folder, granularity, shape, speed, ratio, G, solve_obstruction=True):
+    """
+    Implements suspend (hide in the closest illuminating FLS) technique of Section 6.3
+    """
     if ratio < 3:
         return [], 0, [], [], [], [], []
 
@@ -674,7 +683,7 @@ def suspend_hide(file_path, ptcld_folder, granularity, shape, speed, ratio, G, s
     avg_restore_dist = []
 
     if solve_obstruction:
-        hide_in_illumcell(ptcld_folder, meta_dir, ratio, G, shape, granularity)
+        hide_in_illumination_cell(ptcld_folder, meta_dir, ratio, G, shape, granularity)
 
     none_obstruct_stanby = read_coordinates(f"{file_path}/points/{shape}_{granularity}_hide_standby.txt", ' ', 1)
     none_obstruct_stanby = none_obstruct_stanby[:, 0:3]
@@ -742,7 +751,7 @@ if __name__ == "__main__":
     # a {granularity} degree angle with the previous one.
     granularity_list = [10]  # the granularity of degree changes.
 
-    Q_list = [1, 3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.
+    Q_list = [3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.
 
     # Select these base on the group formation you have, see '../assets/pointclouds'
     # This is the size of group constructed by the group formation technique that you would like to test.
@@ -756,7 +765,7 @@ if __name__ == "__main__":
 
             for G in G_list:
 
-                suspend_info, dissolve_info, move_back_info, hide_info = [], [], [], []
+                suspend_info, dissolve_info, transpose_info, suspend_hide_info = [], [], [], []
 
                 for Q in Q_list:
                     file_path = f"{meta_dir}/obstructing/Q{Q}/G{G}"
@@ -765,25 +774,27 @@ if __name__ == "__main__":
                         suspend(figure_path, file_path, ptcld_folder, granularity, shape, velocity_model, Q, G))
                     dissolve_info.append(
                         dissolve(figure_path, file_path, ptcld_folder, granularity, shape, velocity_model, Q, G))
-                    move_back_info.append(
+                    transpose_info.append(
                         transpose(file_path, ptcld_folder, granularity, shape, velocity_model, Q, G, True))
 
                     if Q >= 3:
-                        hide_info.append(
+                        suspend_hide_info.append(
                             suspend_hide(file_path, ptcld_folder, granularity, shape, velocity_model, Q, G, True))
 
-                        hide_mtid = hide_info[-1][5]
+                        suspend_hide_mtid = suspend_hide_info[-1][5]
                     else:
-                        hide_mtid = []
+                        suspend_hide_mtid = []
 
                     ori_mtid = suspend_info[-1][6]
-                    move_back_mtid = move_back_info[-1][5]
+                    suspend_mtid = suspend_info[-1][5]
+                    dissolve_mtid = dissolve_info[-1][5]
+                    transpose_mtid = transpose_info[-1][5]
 
                     if not os.path.exists(f"{figure_path}/{shape}"):
                         os.makedirs(f"{figure_path}/{shape}", exist_ok=True)
-                    draw_MTID(granularity, ori_mtid, move_back_mtid, hide_mtid,
+                    draw_MTID(granularity, ori_mtid, transpose_mtid, suspend_hide_mtid,
                               f"{figure_path}/{shape}/{shape}_G{G}_GQ{granularity}_MTID_CMP.png")
                 draw_change_plot(figure_path, 'Suspend', 'Suspended', suspend_info, 'suspend')
                 draw_change_plot(figure_path, 'Dissolve', 'Dissolved', dissolve_info, 'dissolve')
-                draw_change_plot(figure_path, 'Transpose', 'Transposed', move_back_info, 'transpose')
-                draw_change_plot(figure_path, 'Hide', 'Hidden', hide_info, 'hide')
+                draw_change_plot(figure_path, 'Transpose', 'Transposed', transpose_info, 'transpose')
+                draw_change_plot(figure_path, 'Suspend-Hide', 'Suspend-Hide', suspend_hide_info, 'suspend_hide')

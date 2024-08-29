@@ -273,12 +273,12 @@ if __name__ == "__main__":
     G_list = [3, 20]  # This is the size of group constructed by the group formation technique that you would like to test.
     shape_list = ["skateboard", "dragon", "hat"]  # This is the list of shape to run this on
 
-    # for illum_to_disp_ratio in Q_list:
-    #     for G in G_list:
-    #         for shape in shape_list:
-    #             calculate_obstructing_omnidegree(ptcld_folder, meta_dir, illum_to_disp_ratio, G, shape, granularity)
-
     for illum_to_disp_ratio in Q_list:
         for G in G_list:
             for shape in shape_list:
-                prevent_obstructions(ptcld_folder, meta_dir, illum_to_disp_ratio, G, shape, granularity)
+                calculate_obstructing_omnidegree(ptcld_folder, meta_dir, illum_to_disp_ratio, G, shape, granularity)
+
+    # for illum_to_disp_ratio in Q_list:
+    #     for G in G_list:
+    #         for shape in shape_list:
+    #             prevent_obstructions(ptcld_folder, meta_dir, illum_to_disp_ratio, G, shape, granularity)
