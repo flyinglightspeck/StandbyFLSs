@@ -1,3 +1,4 @@
+import json
 import logging
 
 import matplotlib as mpl
@@ -159,6 +160,7 @@ def read_bools_from_file(file_path):
 
     except FileNotFoundError:
         logging.error(f"File {file_path} not found. Please run obstruction_prevention.py to generate it.")
+        exit()
 
 
 def draw_change_plot(path, type, title_name, all_info, figure_name):
@@ -184,6 +186,9 @@ def draw_change_plot(path, type, title_name, all_info, figure_name):
     if len(all_info[0]) >= 5:
         draw_avg_dist_traveled(granularity, avg_dists_restored,
                                f"{path}/{shape}/{shape}_G{G}_GQ{granularity}_dist_traveled_restore_{figure_name}.png")
+
+    with open(f"{path}/{shape}/{shape}_G{G}_GQ{granularity}_{figure_name}_info.json", "w") as outfile:
+        json.dump(all_info, outfile, indent=2)
 
 
 def draw_changed_standby(granularity, restored_list, removed_list, activating_list, save_path):
@@ -223,7 +228,7 @@ def draw_avg_dist_traveled(granularity, dists_lists, save_path):
     fig = plt.figure(figsize=(5, 3), layout='constrained')
 
     for i in range(0, 4):
-        if len(dists_lists[i]) <= 0:
+        if i >= len(dists_lists) or len(dists_lists[i]) <= 0:
             continue
         plt.plot(degrees, dists_lists[i], marker=markers[i], markersize=4, c=colors[i], label=f'Q={Q_list[i]}')
 
@@ -249,7 +254,7 @@ def draw_MTID_change_percentage(granularity, change_lists, save_path):
     fig = plt.figure(figsize=(5, 3), layout='constrained')
     cols = 0
     for i in range(0, 4):
-        if len(change_lists[i]) <= 0:
+        if i >= len(change_lists) or len(change_lists[i]) <= 0:
             continue
         cols += 1
         plt.plot(degrees, change_lists[i], marker=markers[i], markersize=4, c=colors[i], label=f'Q={Q_list[i]}')
@@ -290,7 +295,7 @@ def draw_dissolved_percentage(granularity, removed_lists, total_groups, type, sa
     fig = plt.figure(figsize=(5, 3), layout='constrained')
     cols = 0
     for i in range(0, 4):
-        if total_groups[i] <= 0:
+        if i >= len(total_groups) or total_groups[i] <= 0:
             continue
         cols += 1
         dissolved_list = [dissolved / total_groups[i] for dissolved in removed_lists[i]]
