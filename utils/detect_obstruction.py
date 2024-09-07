@@ -600,7 +600,7 @@ def walk_around_detect_obstructing_flss(ptcld_folder, meta_direc, ratio, G, shap
         standby_file = f"{shape}_standby.txt"
         points, boundary, standbys = get_points_from_file(ratio, ptcld_folder, output_path, txt_file, standby_file)
     except Exception as e:
-        print("File Doesn't Generated Yet, Re-generating")
+        print("Generating required files.")
         points, boundary, standbys, _ = get_points(shape, G, ptcld_folder, ratio)
 
     np.savetxt(f'{output_path}/points/{shape}_standby.txt', standbys, fmt='%f', delimiter=' ')
