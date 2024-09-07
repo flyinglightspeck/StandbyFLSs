@@ -590,12 +590,9 @@ def detect_obstructing_fls(user_eye, points, ratio, standbys):
 
 
 def walk_around_detect_obstructing_flss(ptcld_folder, meta_direc, ratio, G, shape, granularity, write_output=True):
-    # fig = plt.figure()
-    # ax = fig.add_subplot(projection='3d')
-
-    output_path = f"{meta_direc}/obstructing/Q{ratio}/G{G}"
+    output_path = os.path.join(meta_direc, "obstructing", f"Q{ratio}", f"G{G}")
     if not os.path.exists(output_path):
-        os.makedirs(output_path, exist_ok=True)
+        os.makedirs(os.path.join(output_path, 'points'), exist_ok=True)
 
     txt_file = f"{shape}.txt"
 
