@@ -1,6 +1,6 @@
 import os
 
-from obstructing_detection import *
+from detect_obstruction import *
 
 
 def normalize(v):
