@@ -1,28 +1,9 @@
 from solve_obstruction import *
 import matplotlib as mpl
 
+from utils.distance_point_to_line import distance_point_to_line
+
 mpl.rcParams['font.family'] = 'Times New Roman'
-
-
-def distance_point_to_line(point, line_points):
-    point = np.array(point)
-    line_point1 = np.array(line_points[0])
-    line_point2 = np.array(line_points[1])
-
-    AP = point - line_point1
-    AB = line_point2 - line_point1
-
-    # Calculate the cross product and its norm
-    cross_product = np.cross(AP, AB)
-    norm_cross = np.linalg.norm(cross_product)
-
-    # Calculate the norm of AB
-    norm_AB = np.linalg.norm(AB)
-
-    # Calculate the distance
-    distance = norm_cross / norm_AB
-
-    return distance
 
 
 def get_dist_to_dispatcher(dispatcher, shape, k, file_folder, ratio):

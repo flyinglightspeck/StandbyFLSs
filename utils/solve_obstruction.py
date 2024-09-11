@@ -1,13 +1,11 @@
-import json
 import logging
 import pickle
 
 import matplotlib as mpl
-import numpy as np
 from matplotlib.ticker import PercentFormatter
 
 from move_back_obstructing import *
-from standby_or_dispatcher import distance_point_to_line
+from distance_point_to_line import distance_point_to_line
 from prevent_obstructing import rotate_vector, closest_points, read_obstruction_maps
 
 mpl.rcParams['font.family'] = 'Times New Roman'
@@ -929,6 +927,7 @@ if __name__ == "__main__":
 
                 suspend_info, dissolve_info, transpose_info, suspend_hide_info, suspend_hide_obstructed_info = [], [], [], [], []
 
+                preloaded = False
                 if os.path.exists(f"{figure_path}/{shape}/{shape}_K{G}_GR{granularity}_suspend_info.pkl"):
                     with open(f"{figure_path}/{shape}/{shape}_K{G}_GR{granularity}_suspend_info.pkl", 'rb') as file:
                         suspend_info = pickle.load(file)
@@ -942,10 +941,9 @@ if __name__ == "__main__":
                     with open(f"{figure_path}/{shape}/{shape}_K{G}_GR{granularity}_suspend_hide_obstructed_info.pkl",
                               'rb') as file:
                         suspend_hide_obstructed_info = pickle.load(file)
-
-                else:
-                    for Q in Q_list:
-
+                    preloaded = True
+                for i, Q in enumerate(Q_list):
+                    if not preloaded:
                         file_path = f"{meta_dir}/obstructing/Q{Q}/G{G}"
 
                         suspend_info.append(
@@ -959,26 +957,25 @@ if __name__ == "__main__":
                             suspend_hide_info.append(
                                 suspend_hide_in_closest_illuminating_fls(file_path, ptcld_folder, granularity, shape, velocity_model, Q, G, True))
 
-                            suspend_hide_mtid = suspend_hide_info[-1][5]
-
                             suspend_hide_obstructed_info.append(
                                 suspend_hide_in_obstructed_illuminating_fls(file_path, ptcld_folder, granularity, shape,
                                                                             velocity_model, Q, G, True))
 
-                            suspend_hide_obstructed_mtid = suspend_hide_obstructed_info[-1][5]
-                        else:
-                            suspend_hide_mtid = []
-                            suspend_hide_obstructed_mtid = []
+                    if Q >= 3:
+                        suspend_hide_mtid = suspend_hide_info[i-1][5]
+                        suspend_hide_obstructed_mtid = suspend_hide_obstructed_info[i-1][5]
+                    else:
+                        suspend_hide_mtid = []
+                        suspend_hide_obstructed_mtid = []
+                    ori_mtid = suspend_info[i][6]
+                    suspend_mtid = suspend_info[i][5]
+                    dissolve_mtid = dissolve_info[i][5]
+                    transpose_mtid = transpose_info[i][5]
 
-                        ori_mtid = suspend_info[-1][6]
-                        suspend_mtid = suspend_info[-1][5]
-                        dissolve_mtid = dissolve_info[-1][5]
-                        transpose_mtid = transpose_info[-1][5]
-
-                        if not os.path.exists(f"{figure_path}/{shape}"):
-                            os.makedirs(f"{figure_path}/{shape}", exist_ok=True)
-                        draw_MTID(granularity, ori_mtid, transpose_mtid, suspend_hide_mtid,
-                                  f"{figure_path}/{shape}/{shape}_G{G}_GQ{granularity}_MTID_CMP.png")
+                    if not os.path.exists(f"{figure_path}/{shape}"):
+                        os.makedirs(f"{figure_path}/{shape}", exist_ok=True)
+                    draw_MTID(granularity, ori_mtid, transpose_mtid, suspend_hide_mtid,
+                              f"{figure_path}/{shape}/{shape}_K{G}_Q{Q}_GR{granularity}_MTID_CMP.png")
                 draw_change_plot(figure_path, 'Suspend', 'Suspended', suspend_info, 'suspend')
                 draw_change_plot(figure_path, 'Dissolve', 'Dissolved', dissolve_info, 'dissolve')
                 draw_change_plot(figure_path, 'Transpose', 'Transposed', transpose_info, 'transpose')
