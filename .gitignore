@@ -202,7 +202,8 @@ decentralized_gen_local.sh
 decentralized_aws.sh
 #decentralized_gen.sh
 
-assets/obstructing/
+**/*.png
+**/*.csv
 
 **/.DS_Store
 
