@@ -118,7 +118,7 @@ Standby FLSs remain dark while waiting to recover failed FLSs. Thus, it may bloc
 The program `./utils/detect_obstruction.py` implements analytical models to detect obstructing standby FLSs. It has two variants:
    * One assumes the user is looking at the shape from six views: [front, back, top, bottom, left, right]. To use this variant run `./utils/detect_obstruction.py --six-view`.
    * The other assumes the user is walking around the shape on a circle while looking at the shape. To use this variant run `./utils/detect_obstruction.py` without arguments.
-The outcomes of these models are already generated and available in `assests/obstructing/Q*` directories.
+
 
 `./utils/detect_obstruction.py` assumes:
 
@@ -131,7 +131,7 @@ In `./assets/pointcloud`, we provide files for the alternative shapes of the pre
    * Specified Illumination Cell to Display Cell Ratio, `Q`. This defined the size of an illumination Cell.
 
 The output of executing `./utils/detect_obstruction.py` includes:
-   * `./assets/Obstructing/Q[value of Q]/G[Group Size]/` contain lists of text files, that recorded coordinates all standby FLSs, coordinates of obstructing standby FLSs, coordinates of illuminating FLSs blocked by them, coordinates of standby FLSs that are visible to human eyes, and coordinates of illuminating FLSs that are visible to human eyes.
+   * `./assets/Obstructing/Q[value of Q]/G[Group Size]/` contain lists of text files, that recorded coordinates all standby FLSs, coordinates of obstructing standby FLSs, coordinates of illuminating FLSs blocked by them, coordinates of standby FLSs that are visible to human eyes, and coordinates of illuminating FLSs that are visible to human eyes. These files are already generated and available in `assests/obstructing/Q*` directories.
    * `./assets/Obstructing/Q[value of Q]/report_Q[value of Q]_G[Group Size]_[shape].csv` contain numbers of visible illuminating FLSs,  numbers of obstructing FLSs, Min/Avg/Max Time checked for an available (not overlapping with any other FLSs) location for standby FLSs.
 This information is reported for each shape, group size, Q and view or angle depending on the variant (include six views, [front, back, top, bottom, left, right] or a tuple indicating granularity and step number).  This is a row of the report file.
 
@@ -243,7 +243,7 @@ This program relies on precomputed obstruction masks which are already in the `a
 
 
 # Emulator
-This software include a scalable emulator of FLSs described in Appendix A. It emulates operation of multiple FLSs to illuminate a 3d point cloud by running parallel processes.  
+This software includes a scalable emulator of FLSs described in Appendix A. It emulates operation of multiple FLSs to illuminate a 3d point cloud by running parallel processes.  
 It consists three types of processes, Orchestrator, Secondary, and FLS processes. Orchestrator and Secondary processes are artifacts that facilitate running a large number of FLS processes across different servers of a datacenter. FLS processes implements functionalities and characteristics of an FLS such as flying, communicating, and failing.
 Point clouds with small number of points can be run locally on a single machine while with larger number of points multiple machines with multiple cores are required.
 
