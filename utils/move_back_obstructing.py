@@ -41,14 +41,14 @@ def get_dist_to_centroid(standbys, shape, G, file_folder, ratio):
 
     for i, group in enumerate(groups):
         distances = [get_distance(standbys[i], coord) for coord in group]
-
-        dists.extend(distances)
+        n = len(distances)
+        dists.append(distances[int(np.ceil(np.random.random() * n)) - 1])
 
     return dists
 
 
 def dist_to_move_all(standbys, shape, G, file_folder, ratio):
-    input_file = f"{shape}_G{G}.xlsx"
+    input_file = f"{shape}_K{G}.xlsx"
 
     groups = read_cliques_xlsx(f"{file_folder}/{input_file}", ratio)
 
@@ -72,7 +72,7 @@ def solve_single_view(shape, G, ratio, view, lastview, user_eye, group_file, out
     try:
         points, boundary, standbys = get_points_from_file(ratio, group_file, output_path, txt_file, standby_file)
     except Exception as e:
-        print("File Doesn't Generated Yet, Re-generating")
+        print("Generating required files.")
         points, boundary, standbys, _ = get_points(shape, G, group_file, ratio)
 
     if not test:
@@ -91,7 +91,7 @@ def solve_single_view(shape, G, ratio, view, lastview, user_eye, group_file, out
 
         if not os.path.exists(f"{output_path}/points"):
             os.makedirs(f"{output_path}/points", exist_ok=True)
-        np.savetxt(f'{output_path}/points/{shape}_{view}_standby.txt', standbys, fmt='%f', delimiter=' ')
+        np.savetxt(f'{output_path}/points/{shape}_{view}_{file_surfix}.txt', standbys, fmt='%f', delimiter=' ')
         metrics = [shape, G, ratio, view, 0, 0, 0,
                    0, 0, 0,
                    0, 0, 0,
@@ -333,7 +333,6 @@ def solve_obstructing(group_file, meta_direc, ratio, G_list, shape_list):
 
 
 if __name__ == "__main__":
-
     file_folder = "../assets/pointcloud"
     meta_dir = "../assets"
     Q_list = [1, 3, 5, 10]  # This is the list of Illumination cell to display cell ratio you would like to test.

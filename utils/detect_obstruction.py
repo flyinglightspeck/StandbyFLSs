@@ -77,7 +77,7 @@ def read_coordinates(file_path, delimeter=' ', type=0):
         print(f"The file at path {file_path} does not exist.")
         return None
     except Exception as e:
-        print(f"An error occurred 5: {e}")
+        print(f"An error occurred: {e}")
         return None
 
 
@@ -723,8 +723,8 @@ if __name__ == "__main__":
 
     args = arg_parser.parse_args()
 
-    if args.six_view:
-        run_six_view_obstruction_detection()
-    else:
-        run_walk_around_obstruction_detection()
+    # if args.six_view:
+    run_six_view_obstruction_detection()
+    # else:
+    #     run_walk_around_obstruction_detection()
 

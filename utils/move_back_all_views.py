@@ -2,7 +2,7 @@ import csv
 import os
 
 from move_back_obstructing import solve_single_view
-from obstructing_detection import calculate_single_view, get_points_from_file
+from detect_obstruction import calculate_single_view, get_points_from_file
 import multiprocessing as mp
 
 
@@ -93,7 +93,6 @@ def solve_all_views(group_file, meta_direc, ratio, G, shape):
         # Write the data from the list to the CSV file
         for row in result_solve:
             writer.writerow(row)
-
 
 
 if __name__ == "__main__":

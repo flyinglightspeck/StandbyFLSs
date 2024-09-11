@@ -1,7 +1,9 @@
 import json
 import logging
+import pickle
 
 import matplotlib as mpl
+import numpy as np
 from matplotlib.ticker import PercentFormatter
 
 from move_back_obstructing import *
@@ -15,7 +17,7 @@ markers = ['s', 'v', 'o', 'x']
 Q_list = [1, 3, 5, 10]
 
 
-def hide_in_illumination_cell(ptcld_folder, meta_direc, ratio, G, shape, granularity):
+def hide_in_closest_illuminating_fls(ptcld_folder, meta_direc, ratio, G, shape, granularity):
     output_path = f"{meta_direc}/obstructing/Q{ratio}/G{G}"
 
     txt_file = f"{shape}.txt"
@@ -54,6 +56,48 @@ def hide_in_illumination_cell(ptcld_folder, meta_direc, ratio, G, shape, granula
         if not os.path.exists(f"{output_path}/points"):
             os.makedirs(f"{output_path}/points", exist_ok=True)
         np.savetxt(f'{output_path}/points/{shape}_{granularity}_hide_standby.txt', standbys, fmt='%d', delimiter=' ')
+
+
+def hide_in_obstructed_fls(ptcld_folder, meta_direc, ratio, G, shape, granularity):
+    output_path = f"{meta_direc}/obstructing/Q{ratio}/G{G}"
+
+    txt_file = f"{shape}.txt"
+    try:
+        standby_file = f"{shape}_standby.txt"
+        _, boundary, standbys = get_points_from_file(ratio, ptcld_folder, output_path, txt_file, standby_file)
+    except Exception as e:
+        print("File isn't generated yet, regenerating")
+        _, boundary, standbys, _ = get_points(shape, G, ptcld_folder, ratio)
+
+    points = read_coordinates(f"{ptcld_folder}/{txt_file}", ' ')
+    points = np.array(points)
+    points = points * ratio
+
+    combined_obstruction_map = read_obstruction_maps(output_path, shape, granularity)
+
+    print(sum(combined_obstruction_map))
+    # return
+    standbys = standbys[:, :3]
+    # get the indices of the elements that are non-zero
+    obs_idx = np.nonzero(combined_obstruction_map)
+    obs_stb_coords = standbys[obs_idx]
+
+    if ratio >= 3:
+        closest_ill_coords = closest_points(standbys, points[:, :3])
+
+        is_member = 0
+        standby_match = get_illum_standby_matching(shape, G, ptcld_folder, ratio)
+        for i in range(len(standbys)):
+            if closest_ill_coords[i] in standby_match[i]:
+                is_member += 1
+        print(f"Is member percentage: {is_member / len(standbys)}")
+        new_obs_stb_coords = closest_ill_coords + np.array([0, 0, -1])
+        standbys = new_obs_stb_coords
+
+        if not os.path.exists(f"{output_path}/points"):
+            os.makedirs(f"{output_path}/points", exist_ok=True)
+        np.savetxt(f'{output_path}/points/{shape}_{granularity}_standby_hidden_in_obstructed.txt', standbys, fmt='%d',
+                   delimiter=' ')
 
 
 def get_shape_info(file_path, ptcld_folder, shape, ratio):
@@ -164,7 +208,7 @@ def read_bools_from_file(file_path):
 
 
 def draw_change_plot(path, type, title_name, all_info, figure_name):
-    removed_lists, standby_nums, mtids_change_percentages, avg_dists_traveled, avg_dists_restored = [], [], [], [], []
+    removed_lists, standby_nums, mtids_change_percentages, avg_dists_traveled, avg_dists_restored, avg_dists_combined = [], [], [], [], [], []
 
     for info in all_info:
         removed_lists.append(info[0])
@@ -173,22 +217,37 @@ def draw_change_plot(path, type, title_name, all_info, figure_name):
         avg_dists_traveled.append(info[3])
         if len(info) >= 5:
             avg_dists_restored.append(info[4])
+            avg_dists_combined.append([info[3][i] + info[4][i] for i in range(len(info[3]))])
 
     if not os.path.exists(f"{path}/{shape}"):
         os.makedirs(f"{path}/{shape}", exist_ok=True)
 
+    if figure_name == "suspend_hide" or figure_name == "suspend_hide_obstructed":
+        offset = 1
+    else:
+        offset = 0
+
     draw_dissolved_percentage(granularity, removed_lists, standby_nums, title_name,
-                              f"{path}/{shape}/{shape}_G{G}_GQ{granularity}_{figure_name}_percentage.png")
+                              f"{path}/{shape}/{shape}_K{G}_GR{granularity}_{figure_name}_percentage.png",
+                              offset=offset)
     draw_MTID_change_percentage(granularity, mtids_change_percentages,
-                                f"{path}/{shape}/{shape}_G{G}_GQ{granularity}_MTID_percentage_{figure_name}.png")
+                                f"{path}/{shape}/{shape}_K{G}_GR{granularity}_MTID_percentage_{figure_name}.png",
+                                offset=offset)
     draw_avg_dist_traveled(granularity, avg_dists_traveled,
-                           f"{path}/{shape}/{shape}_G{G}_GQ{granularity}_dist_traveled_{figure_name}.png")
+                           f"{path}/{shape}/{shape}_K{G}_GR{granularity}_dist_traveled_{figure_name}.png",
+                           offset=offset)
     if len(all_info[0]) >= 5:
         draw_avg_dist_traveled(granularity, avg_dists_restored,
-                               f"{path}/{shape}/{shape}_G{G}_GQ{granularity}_dist_traveled_restore_{figure_name}.png")
+                               f"{path}/{shape}/{shape}_K{G}_GR{granularity}_dist_traveled_restore_{figure_name}.png",
+                               offset=offset)
 
-    with open(f"{path}/{shape}/{shape}_G{G}_GQ{granularity}_{figure_name}_info.json", "w") as outfile:
-        json.dump(all_info, outfile, indent=2)
+        draw_avg_dist_traveled(granularity, avg_dists_combined,
+                               f"{path}/{shape}/{shape}_K{G}_GR{granularity}_dist_traveled_combined_{figure_name}.png",
+                               offset=offset)
+
+    if not os.path.exists(f"{path}/{shape}/{shape}_K{G}_GR{granularity}_{figure_name}_info.pkl"):
+        with open(f"{path}/{shape}/{shape}_K{G}_GR{granularity}_{figure_name}_info.pkl", "wb") as outfile:
+            pickle.dump(all_info, outfile)
 
 
 def draw_changed_standby(granularity, restored_list, removed_list, activating_list, save_path):
@@ -222,33 +281,35 @@ def draw_changed_standby(granularity, restored_list, removed_list, activating_li
     plt.close()
 
 
-def draw_avg_dist_traveled(granularity, dists_lists, save_path):
-    degrees = [i * granularity for i in range(0, math.floor(360 / granularity) + 1)]
+def draw_avg_dist_traveled(granularity, dists_lists, save_path, offset=0):
+    degrees = [k * granularity for k in range(0, math.floor(360 / granularity) + 1)]
 
     fig = plt.figure(figsize=(5, 3), layout='constrained')
 
     for i in range(0, 4):
         if i >= len(dists_lists) or len(dists_lists[i]) <= 0:
             continue
-        plt.plot(degrees, dists_lists[i], marker=markers[i], markersize=4, c=colors[i], label=f'Q={Q_list[i]}')
+        j = i + offset
+        plt.plot(degrees, dists_lists[i], marker=markers[j], markersize=4, c=colors[j], label=f'Q={Q_list[j]}')
 
     ax = plt.gca()
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
 
-    ax.set_title('Avg Distance Traveled (Display Cells)', loc='left')
+    ax.set_title('Avg Distance Traveled (Display Cell)', loc='left')
     ax.set_xlabel("Angle Relative to Start ($^\circ$)", loc='right', fontsize="large")
     ax.set_xlim(left=0, right=365)
     plt.xticks(np.arange(0, 360 + granularity, step=max(granularity, 20)))
-    ax.set_ylim(0, 710)
+    # ax.set_ylim(0, 710)
+    ax.legend()
 
-    leg = ax.legend(loc=(0.8, 0.7), columnspacing=0.5, frameon=False)
+    # leg = ax.legend(loc=(0.8, 0.7), columnspacing=0.5, frameon=False)
     # plt.show(dpi=500)
     plt.savefig(save_path, dpi=500)
     plt.close()
 
 
-def draw_MTID_change_percentage(granularity, change_lists, save_path):
+def draw_MTID_change_percentage(granularity, change_lists, save_path, offset=0):
     degrees = [i * granularity for i in range(0, math.floor(360 / granularity) + 1)]
 
     fig = plt.figure(figsize=(5, 3), layout='constrained')
@@ -257,7 +318,8 @@ def draw_MTID_change_percentage(granularity, change_lists, save_path):
         if i >= len(change_lists) or len(change_lists[i]) <= 0:
             continue
         cols += 1
-        plt.plot(degrees, change_lists[i], marker=markers[i], markersize=4, c=colors[i], label=f'Q={Q_list[i]}')
+        j = i + offset
+        plt.plot(degrees, change_lists[i], marker=markers[j], markersize=4, c=colors[j], label=f'Q={Q_list[j]}')
 
     ax = plt.gca()
     ax.spines['right'].set_visible(False)
@@ -280,7 +342,8 @@ def draw_MTID_change_percentage(granularity, change_lists, save_path):
     plt.xticks(np.arange(0, 360 + granularity, step=max(granularity, 20)))
 
     # Add legend
-    leg = ax.legend(loc=(0.7, 0.1), columnspacing=0.5, frameon=False)
+    leg = ax.legend()
+    # leg = ax.legend(loc=(0.7, 0.1), columnspacing=0.5, frameon=False)
     leg.get_frame().set_edgecolor('b')
     leg.get_frame().set_linewidth(0.0)
 
@@ -289,7 +352,7 @@ def draw_MTID_change_percentage(granularity, change_lists, save_path):
     plt.close()
 
 
-def draw_dissolved_percentage(granularity, removed_lists, total_groups, type, save_path):
+def draw_dissolved_percentage(granularity, removed_lists, total_groups, type, save_path, offset=0):
     degrees = [i * granularity for i in range(0, math.floor(360 / granularity) + 1)]
 
     fig = plt.figure(figsize=(5, 3), layout='constrained')
@@ -298,8 +361,9 @@ def draw_dissolved_percentage(granularity, removed_lists, total_groups, type, sa
         if i >= len(total_groups) or total_groups[i] <= 0:
             continue
         cols += 1
+        j = i + offset
         dissolved_list = [dissolved / total_groups[i] for dissolved in removed_lists[i]]
-        plt.plot(degrees, dissolved_list, marker=markers[i], markersize=4, c=colors[i], label=f'Q={Q_list[i]}')
+        plt.plot(degrees, dissolved_list, marker=markers[j], markersize=4, c=colors[j], label=f'Q={Q_list[j]}')
 
     ax = plt.gca()
     ax.spines['right'].set_visible(False)
@@ -314,7 +378,8 @@ def draw_dissolved_percentage(granularity, removed_lists, total_groups, type, sa
     # ax.set_ylim(0, 40)
 
     # Add legend
-    leg = ax.legend(loc=(0.7, 0.2), columnspacing=0.5, frameon=False)
+    leg = ax.legend()
+    # leg = ax.legend(loc=(0.7, 0.2), columnspacing=0.5, frameon=False)
     leg.get_frame().set_edgecolor('b')
     leg.get_frame().set_linewidth(0.0)
     # plt.show(dpi=500)
@@ -333,11 +398,14 @@ def draw_MTID(granularity, original_mtid, transpose_mtid, suspend_hide_mtid, sav
     if len(suspend_hide_mtid) >= 1:
         plt.plot(degrees, suspend_hide_mtid, marker=markers[0], markersize=4, c=colors[0],
                  label=f'Move to Closest Illuminating FLS')
+        plt.text(80, min(suspend_hide_mtid) - .8, 'Hide in the Closest Illuminating FLS', color=colors[0],
+                 fontweight='bold',
+                 fontsize=12, zorder=3)
     plt.plot(degrees, original_mtid, marker=markers[1], markersize=4, c=colors[1], label=f'Obstructing FLS Present')
 
-    plt.text(110, min(original_mtid) - 0.4, 'Obstructing FLS Present', color=colors[1], fontweight='bold', fontsize=12, zorder=3)
-    plt.text(80, min(suspend_hide_mtid) - .8, 'Hide in the Closest Illuminating FLS', color=colors[0], fontweight='bold',
-             fontsize=12, zorder=3)
+    plt.text(110, min(original_mtid) - 0.4, 'Obstructing FLS Present', color=colors[1], fontweight='bold', fontsize=12,
+             zorder=3)
+
     plt.text(150, max(transpose_mtid) + 0.2, 'Transpose', color=colors[2], fontweight='bold', fontsize=12, zorder=3)
 
     ax = plt.gca()
@@ -496,7 +564,7 @@ def dissolve(figure_path, file_path, ptcld_folder, granularity, shape, speed, ra
     return cumulative_removed_list, len(standby_list), mtids_change_percentage, avg_dist_traveled, avg_MTID, ori_mtid
 
 
-def suspend(figure_path, file_path, ptcld_folder, granularity, shape, speed, ratio, G):
+def suspend_hangar(figure_path, file_path, ptcld_folder, granularity, shape, speed, ratio, G):
     """
     Implements suspend (move to hangar) technique of Section 6.3
     """
@@ -619,20 +687,20 @@ def transpose(file_path, ptcld_folder, granularity, shape, speed, ratio, G, solv
         restore_dist = []
         avg_dists = []
 
-        none_obstruct_stanby = read_coordinates(f"{file_path}/points/{shape}_{granularity}_{index}_moved_standby.txt",
-                                                ' ', 1)
-        none_obstruct_stanby = none_obstruct_stanby[:, 0:3]
+        none_obstruct_standby = read_coordinates(f"{file_path}/points/{shape}_{granularity}_{index}_moved_standby.txt",
+                                                 ' ', 1)
+        none_obstruct_standby = none_obstruct_standby[:, 0:3]
 
         restored = removed = activating = 0
 
         for j in range(0, len(obstructing_list)):
             if obstructing_list[j] and not standby_list[j]:
                 removed += 1
-                remove_dist.append(get_distance(standbys[j], none_obstruct_stanby[j]))
+                remove_dist.append(get_distance(standbys[j], none_obstruct_standby[j]))
             elif not obstructing_list[j] and standby_list[j]:
                 restored += 1
                 activating += 1
-                restore_dist.append(get_distance(standbys[j], none_obstruct_stanby[j]))
+                restore_dist.append(get_distance(standbys[j], none_obstruct_standby[j]))
             elif not obstructing_list[j]:
                 activating += 1
 
@@ -644,7 +712,7 @@ def transpose(file_path, ptcld_folder, granularity, shape, speed, ratio, G, solv
         avg_remove_dist.append(statistics.mean(remove_dist) if len(remove_dist) > 0 else 0)
         avg_restore_dist.append(statistics.mean(restore_dist) if len(restore_dist) > 0 else 0)
 
-        dists = get_recover_distance_transpose(shape, G, ptcld_folder, ratio, none_obstruct_stanby)
+        dists = get_recover_distance_transpose(shape, G, ptcld_folder, ratio, none_obstruct_standby)
 
         mtids = [calculate_travel_time(max_speed, max_acceleration, max_deceleration, d) for d in dists]
         avg_MTID.append(statistics.mean(mtids))
@@ -657,9 +725,10 @@ def transpose(file_path, ptcld_folder, granularity, shape, speed, ratio, G, solv
         standby_list), mtids_change_percentage, avg_remove_dist, avg_restore_dist, avg_mtids, avg_MTID, avg_dists
 
 
-def suspend_hide(file_path, ptcld_folder, granularity, shape, speed, ratio, G, solve_obstruction=True):
+def suspend_hide_in_closest_illuminating_fls(file_path, ptcld_folder, granularity, shape, speed, ratio, G,
+                                             solve_obstruction=True):
     """
-    Implements suspend (hide in the closest illuminating FLS) technique of Section 6.3
+    Implements suspend:hide (hide in the closest illuminating FLS) technique of Section 6.3
     """
     if ratio < 3:
         return [], 0, [], [], [], [], []
@@ -688,10 +757,10 @@ def suspend_hide(file_path, ptcld_folder, granularity, shape, speed, ratio, G, s
     avg_restore_dist = []
 
     if solve_obstruction:
-        hide_in_illumination_cell(ptcld_folder, meta_dir, ratio, G, shape, granularity)
+        hide_in_closest_illuminating_fls(ptcld_folder, meta_dir, ratio, G, shape, granularity)
 
-    none_obstruct_stanby = read_coordinates(f"{file_path}/points/{shape}_{granularity}_hide_standby.txt", ' ', 1)
-    none_obstruct_stanby = none_obstruct_stanby[:, 0:3]
+    none_obstruct_standby = read_coordinates(f"{file_path}/points/{shape}_{granularity}_hide_standby.txt", ' ', 1)
+    none_obstruct_standby = none_obstruct_standby[:, 0:3]
 
     avg_MTID = []
 
@@ -707,11 +776,11 @@ def suspend_hide(file_path, ptcld_folder, granularity, shape, speed, ratio, G, s
         for j in range(0, len(obstructing_list)):
             if obstructing_list[j] and not standby_list[j]:
                 removed += 1
-                remove_dist.append(get_distance(standbys[j], none_obstruct_stanby[j]))
+                remove_dist.append(get_distance(standbys[j], none_obstruct_standby[j]))
             elif not obstructing_list[j] and standby_list[j]:
                 restored += 1
                 activating += 1
-                restore_dist.append(get_distance(standbys[j], none_obstruct_stanby[j]))
+                restore_dist.append(get_distance(standbys[j], none_obstruct_standby[j]))
             elif not obstructing_list[j]:
                 activating += 1
 
@@ -724,7 +793,95 @@ def suspend_hide(file_path, ptcld_folder, granularity, shape, speed, ratio, G, s
         avg_restore_dist.append(statistics.mean(restore_dist) if len(restore_dist) > 0 else 0)
 
         dists = get_recover_distance_hide(standbys, obstructing_list, shape, G, ptcld_folder, ratio,
-                                          none_obstruct_stanby)
+                                          none_obstruct_standby)
+
+        mtids = [calculate_travel_time(max_speed, max_acceleration, max_deceleration, d) for d in dists]
+
+        avg_MTID.append(statistics.mean(mtids))
+
+        mtids_change_percentage.append((statistics.mean(mtids) - ori_mtid) / ori_mtid)
+        avg_mtids.append(statistics.mean(mtids))
+        avg_dists.append(statistics.mean(dists))
+
+    return removed_list, len(
+        standby_list), mtids_change_percentage, avg_remove_dist, avg_restore_dist, avg_mtids, avg_dists
+
+
+def suspend_hide_in_obstructed_illuminating_fls(file_path, ptcld_folder, granularity, shape, speed, ratio, G,
+                                                solve_obstruction=True):
+    """
+    Implements suspend:hide (hide in the obstructed illuminating FLS)
+    """
+    if ratio < 3:
+        return [], 0, [], [], [], [], []
+
+    max_speed = max_acceleration = max_deceleration = speed
+
+    standbys, boundary, dispatcher = get_shape_info(file_path, ptcld_folder, shape, ratio)
+
+    obstructing_list = read_bools_from_file(
+        f'{file_path}/points/{shape}_{granularity}_{0}.txt')
+
+    standby_list = [False for _ in obstructing_list]
+
+    restored_list = []
+    removed_list = []
+    activating_list = []
+    mtids_change_percentage = []
+    avg_mtids = []
+    avg_dists = []
+
+    dists = get_recover_distance_transpose(shape, G, ptcld_folder, ratio, standbys)
+    mtids = [calculate_travel_time(max_speed, max_acceleration, max_deceleration, d) for d in dists]
+    ori_mtid = statistics.mean(mtids)
+
+    avg_remove_dist = []
+    avg_restore_dist = []
+
+    if solve_obstruction:
+        hide_in_obstructed_fls(ptcld_folder, meta_dir, ratio, G, shape, granularity)
+
+    # none_obstruct_standby = read_coordinates(f"{file_path}/points/{shape}_{granularity}_hide_standby.txt", ' ', 1)
+    # none_obstruct_standby = none_obstruct_standby[:, 0:3]
+
+    avg_MTID = []
+
+    none_obstruct_standby = {}
+    for i in range(0, math.floor(360 / granularity) + 1):
+        index = i % math.floor(360 / granularity)
+        obstructing_list = read_bools_from_file(f'{file_path}/points/{shape}_{granularity}_{index}.txt')
+        obstructed_fls_coords = np.loadtxt(f'{file_path}/points/{shape}_{granularity}_{index}_blocked.txt', dtype=float,
+                                           delimiter=' ')
+        obstructing_fls_coords = np.loadtxt(f'{file_path}/points/{shape}_{granularity}_{index}_blocking.txt', dtype=float,
+                                           delimiter=' ')
+        remove_dist = []
+        restore_dist = []
+
+        restored = removed = activating = 0
+
+        for j in range(0, len(obstructing_list)):
+            if obstructing_list[j] and not standby_list[j]:
+                removed += 1
+                standby_index = np.where(np.all(np.isclose(obstructing_fls_coords, standbys[j]), axis=1))[0]
+                none_obstruct_standby[j] = obstructed_fls_coords[standby_index]
+                remove_dist.append(get_distance(standbys[j], none_obstruct_standby[j]))
+            elif not obstructing_list[j] and standby_list[j]:
+                restored += 1
+                activating += 1
+                restore_dist.append(get_distance(standbys[j], none_obstruct_standby[j]))
+            elif not obstructing_list[j]:
+                activating += 1
+
+        restored_list.append(restored)
+        removed_list.append(removed)
+        activating_list.append(activating)
+        standby_list = obstructing_list
+
+        avg_remove_dist.append(statistics.mean(remove_dist) if len(remove_dist) > 0 else 0)
+        avg_restore_dist.append(statistics.mean(restore_dist) if len(restore_dist) > 0 else 0)
+
+        dists = get_recover_distance_hide(standbys, obstructing_list, shape, G, ptcld_folder, ratio,
+                                          none_obstruct_standby)
 
         mtids = [calculate_travel_time(max_speed, max_acceleration, max_deceleration, d) for d in dists]
 
@@ -760,7 +917,7 @@ if __name__ == "__main__":
 
     # Select these base on the group formation you have, see '../assets/pointclouds'
     # This is the size of group constructed by the group formation technique that you would like to test.
-    G_list = [3, 20]
+    G_list = [3]
     shape_list = ["skateboard", "dragon", "hat"]  # This is the list of shape to run this on
 
     for granularity in granularity_list:
@@ -770,36 +927,61 @@ if __name__ == "__main__":
 
             for G in G_list:
 
-                suspend_info, dissolve_info, transpose_info, suspend_hide_info = [], [], [], []
+                suspend_info, dissolve_info, transpose_info, suspend_hide_info, suspend_hide_obstructed_info = [], [], [], [], []
 
-                for Q in Q_list:
-                    file_path = f"{meta_dir}/obstructing/Q{Q}/G{G}"
+                if os.path.exists(f"{figure_path}/{shape}/{shape}_K{G}_GR{granularity}_suspend_info.pkl"):
+                    with open(f"{figure_path}/{shape}/{shape}_K{G}_GR{granularity}_suspend_info.pkl", 'rb') as file:
+                        suspend_info = pickle.load(file)
+                    with open(f"{figure_path}/{shape}/{shape}_K{G}_GR{granularity}_dissolve_info.pkl", 'rb') as file:
+                        dissolve_info = pickle.load(file)
+                    with open(f"{figure_path}/{shape}/{shape}_K{G}_GR{granularity}_transpose_info.pkl", 'rb') as file:
+                        transpose_info = pickle.load(file)
+                    with open(f"{figure_path}/{shape}/{shape}_K{G}_GR{granularity}_suspend_hide_info.pkl",
+                              'rb') as file:
+                        suspend_hide_info = pickle.load(file)
+                    with open(f"{figure_path}/{shape}/{shape}_K{G}_GR{granularity}_suspend_hide_obstructed_info.pkl",
+                              'rb') as file:
+                        suspend_hide_obstructed_info = pickle.load(file)
 
-                    suspend_info.append(
-                        suspend(figure_path, file_path, ptcld_folder, granularity, shape, velocity_model, Q, G))
-                    dissolve_info.append(
-                        dissolve(figure_path, file_path, ptcld_folder, granularity, shape, velocity_model, Q, G))
-                    transpose_info.append(
-                        transpose(file_path, ptcld_folder, granularity, shape, velocity_model, Q, G, True))
+                else:
+                    for Q in Q_list:
 
-                    if Q >= 3:
-                        suspend_hide_info.append(
-                            suspend_hide(file_path, ptcld_folder, granularity, shape, velocity_model, Q, G, True))
+                        file_path = f"{meta_dir}/obstructing/Q{Q}/G{G}"
 
-                        suspend_hide_mtid = suspend_hide_info[-1][5]
-                    else:
-                        suspend_hide_mtid = []
+                        suspend_info.append(
+                            suspend_hangar(figure_path, file_path, ptcld_folder, granularity, shape, velocity_model, Q, G))
+                        dissolve_info.append(
+                            dissolve(figure_path, file_path, ptcld_folder, granularity, shape, velocity_model, Q, G))
+                        transpose_info.append(
+                            transpose(file_path, ptcld_folder, granularity, shape, velocity_model, Q, G, True))
 
-                    ori_mtid = suspend_info[-1][6]
-                    suspend_mtid = suspend_info[-1][5]
-                    dissolve_mtid = dissolve_info[-1][5]
-                    transpose_mtid = transpose_info[-1][5]
+                        if Q >= 3:
+                            suspend_hide_info.append(
+                                suspend_hide_in_closest_illuminating_fls(file_path, ptcld_folder, granularity, shape, velocity_model, Q, G, True))
 
-                    if not os.path.exists(f"{figure_path}/{shape}"):
-                        os.makedirs(f"{figure_path}/{shape}", exist_ok=True)
-                    draw_MTID(granularity, ori_mtid, transpose_mtid, suspend_hide_mtid,
-                              f"{figure_path}/{shape}/{shape}_G{G}_GQ{granularity}_MTID_CMP.png")
+                            suspend_hide_mtid = suspend_hide_info[-1][5]
+
+                            suspend_hide_obstructed_info.append(
+                                suspend_hide_in_obstructed_illuminating_fls(file_path, ptcld_folder, granularity, shape,
+                                                                            velocity_model, Q, G, True))
+
+                            suspend_hide_obstructed_mtid = suspend_hide_obstructed_info[-1][5]
+                        else:
+                            suspend_hide_mtid = []
+                            suspend_hide_obstructed_mtid = []
+
+                        ori_mtid = suspend_info[-1][6]
+                        suspend_mtid = suspend_info[-1][5]
+                        dissolve_mtid = dissolve_info[-1][5]
+                        transpose_mtid = transpose_info[-1][5]
+
+                        if not os.path.exists(f"{figure_path}/{shape}"):
+                            os.makedirs(f"{figure_path}/{shape}", exist_ok=True)
+                        draw_MTID(granularity, ori_mtid, transpose_mtid, suspend_hide_mtid,
+                                  f"{figure_path}/{shape}/{shape}_G{G}_GQ{granularity}_MTID_CMP.png")
                 draw_change_plot(figure_path, 'Suspend', 'Suspended', suspend_info, 'suspend')
                 draw_change_plot(figure_path, 'Dissolve', 'Dissolved', dissolve_info, 'dissolve')
                 draw_change_plot(figure_path, 'Transpose', 'Transposed', transpose_info, 'transpose')
                 draw_change_plot(figure_path, 'Suspend-Hide', 'Suspend-Hide', suspend_hide_info, 'suspend_hide')
+                draw_change_plot(figure_path, 'Suspend-Hide-Obstructed', 'Suspend-Hide-Obstructed',
+                                 suspend_hide_obstructed_info, 'suspend_hide_obstructed')
