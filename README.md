@@ -5,15 +5,14 @@ This repository contains software that models deployment and failure handling of
 Authors:  Hamed Alimohammadzadeh(halimoha@usc.edu), Shuqin Zhu (shuqinzh@usc.edu), and Shahram Ghandeharizadeh (shahram@usc.edu)
 
 # Features
+   * Five techniques to eliminate dark standby FLSs from obstructing the user field of view:  Transpose, Dissolve, and Suspend (3 variants).
+   * A configurable distributed emulator to quantify the Quality of Illumination (QoI) as a function of time for a point cloud.  Each FLS is modeled as a process. Both illuminating and standby FLSs may fail either mid-flight to their destination or once at their destination. Consequently FLSs communicate with each other to compensate for the failed FLSs. With large point cloudes (FLSs), the simulator scales horizontally to run across multiple servers.
+   * Detection of obstructing dark standby FLSs.
    * An FLS velocity model consisting of adjustable acceleration, deceleration, and speed parameters.
    * Two FLS failure models:  RandTTL using a uniform distribution and BetaTTL using a skewed distribution.
    * Fix-sized reliability groups consisting of G illuminating FLSs and 1 standby FLSs.
-   * Mean Time to Illuminate a Dark (MTID) point after an illuminating FLS fails.  Visualize results by generating png files in `./assets/figures`.
-   * Both illuminating and standby FLSs may fail either mid-flight to their destination or once at their destination.
-   * A configurable simulation model to quantify the Quality of Illumination (QoI) as a function of time for a point cloud.  Each FLS is modeled as a process.  With large point cloudes (FLSs), the simulator scales horizontally to run across multiple servers.
-   * Detection of obstructing dark standby FLSs.
-   * Four techniques to eliminate dark standby FLSs from obstructing the user field of view:  Dissolve, Suspend (2 variants), Transpose.
-   * Visualizes results by providing a histogram of the group sizes, box plot of distance from the center of a group to the group members, average distance from a dispatcher to group centroid
+   * Computation of metrics including Mean Time to Illuminate a Dark (MTID) point after an illuminating FLS fails.
+   * Visualization of results.
 
 # Limitations
    * In general, a reliability group may consist of C standby FLSs.  The current implmentation supports C=1 only.
@@ -62,139 +61,9 @@ If anything went wrong with the bash command, make sure you have installed pytho
 We recommend the use of PyCharm for running this software on a single laptop or server for evaluation purposes.
 By installing and using PyCharm, the single server version of software will execute on a wide range of operating systems ranging from macOS to Windows.  
 
-# Emulator
-This software include a scalable emulator of FLSs described in Appendix A. It emulates operation of multiple FLSs to illuminate a 3d point cloud by running parallel processes.  
-It consists three types of processes, Orchestrator, Secondary, and FLS processes. Orchestrator and Secondary processes are artifacts that facilitate running a large number of FLS processes across different servers of a datacenter. FLS processes implements functionalities and characteristics of an FLS such as flying, communicating, and failing.
-Point clouds with small number of points can be run locally on a single machine while with larger number of points multiple machines with multiple cores are required.
-
-## Run Local
-
-The variables specified in `config.py` control settings. Once these are adjusted (see below), run:
-
-`python3 primary.py`
-
-After the notification "INFO - Waiting for secondary nodes to connect" shows, run:
-
-`python3 secondary.py`
-
-Need to notice that the result output path is also an adjustable configuration.
-
-## Set Up and Run on Cloud Lab
-First, set up a cluster of servers. Creat a cloudlab profile using the file `profile.py`, then start your own experiments with any chosen type of nodes. 
-Ideally, the total number of cores of the servers should equal or be greater than the number of points in the point cloud (number of FLSs).
-Otherwise, the lack of cores may cause incorrect results. Normally, when the accessible resource is limited, one core for 2 to 4 points will also work. 
- 
-After setting up cloudlab, modify the following files based on comment:
-
-* `gen_conf_cluster`: Identify the path where the gen_conf.py lies
-* `cloudlab_vars.sh`： set the number of nodes 
-* `constants.py`: Set broadcast address and port
-
-Change the configuration for experiments in `gen_conf.py`, this will be the base script to generate configure for each experiment.
-Once it's settle, checkout the number of total configurations, and change the number in the For Loop to `the total configuration sets - 1`.
-The system will traverse all these configuration sets.
-
-Finally, modify the script `decentralized_gen.sh` following the comment just like previous files. Then run the script to clone the
-project and setup on cloudlab (See section above).
-
-Run `bash setup.sh` to set up the project.
-
-After all above are done, run `bash nohup_run.sh` on the primary node (node with index 0). Use `tail -f my.log` to trace output in the root directory.
-
-To stop the running process, run the `sudo pkill python3` command in `decentralized_gen.sh`, then run `nohup_kill.sh` on
-the primary node.
-
-## Experiment Report
-
-The final report will be generated in a folder named with the experiment configuration, under the result path directory.
-A report will include 3 data sheets:
- * Metrics
- * Config
- * Dispatcher
-
-The Metric sheet includes all the reporting information, detailed description shown blown:
-
-| Term                                                    | Definition                                                                                                                                                                                               |
-|:--------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| QoI before Reset                                        | Percentage of illuminating FLSs defined as the number of illuminating FLSs divided by the total number of required FLSs (points in a point cloud).  Measured once all initial FLSs have been dispatched. |
-| QoI after Reset                                         | Same as above, but measured at the end of the experiment                                                                                                                                                 |
-| Dispatched Before Reset                                 | Number of FLSs dispatched before all initial illuminating and initial standby FLSs were dispatched                                                                                                       |
-| Dispatched After Reset                                  | Number of FLSs dispatched after all initial illuminating and initial standby FLSs were dispatched                                                                                                        |
-| Failure Before Reset                                    | Number of failed FLSs before all initial illuminating and initial standby FLSs were dispatched                                                                                                           |
-| Failure After Reset                                     | Number of failed FLSs after all initial illuminating and initial standby FLSs were dispatched                                                                                                            |
-| Mid-Flight                                              | Number of mid-flight FLSs at the end of the experiment                                                                                                                                                   |
-| Illuminating                                            | Number of illuminating FLSs at the end of the experiment                                                                                                                                                 |
-| Stationary Standby                                      | Number of stationary FLSs at the end of the experiment                                                                                                                                                   |
-| Avg Travel Time                                         | Depends on the speed model, average time to travel the distance                                                                                                                                          |
-| Min Travel Time                                         | Depends on the speed model, min time to travel the distance                                                                                                                                              |
-| Max Travel Time                                         | Depends on the speed model, max time to travel the distance                                                                                                                                              |
-| Median Travel Time                                      | Depends on the speed model, median time to travel the distance                                                                                                                                           |
-| Avg Dist Traveled                                       | Average distance traveled by the dispatched FLSs                                                                                                                                                         |
-| Min Dist Traveled                                       | Minimum distance traveled by the dispatched FLSs                                                                                                                                                         |
-| Max Dist Traveled                                       | Maximum distance traveled by the dispatched FLSs                                                                                                                                                         |
-| Median Dist Traveled                                    | Median distance traveled by the dispatched FLSs                                                                                                                                                          |
-| Avg MTTR                                                | Average mean time to repair an FLS                                                                                                                                                                       |
-| Min MTTR                                                | Minimum mean time to repair an FLS                                                                                                                                                                       |
-| Max MTTR                                                | Maximum mean time to repair an FLS                                                                                                                                                                       |
-| Median MTTR                                             | Median mean time to repair an FLS                                                                                                                                                                        |
-| Deploy Rate before reset                                | The rate at which a dispatcher deploys FLSs when initiating an illumination                                                                                                                              |
-| Deploy rate After Reset                                 | The rate at which a dispatcher deploys FLSs after all FLSs to illuminate a shape have been deployed                                                                                                      |
-| Number of Groups                                        | Number of reliability groups                                                                                                                                                                             |
-| Min_dist_arrived_illuminate                             | Minimum distance traveled by illuminating FLSs that failed after arrival (distance from dispatcher to illuminating point)                                                                                |
-| Max_dist_arrived_illuminate                             | Maximum distance traveled by illuminating FLSs that failed after arrival (distance from dispatcher to illuminating point)                                                                                |
-| Avg_dist_arrived_illuminate                             | Average distance traveled by illuminating FLSs that failed after arrival (distance from dispatcher to illuminating point)                                                                                |
-| Median_dist_arrived_illuminate                          | Median distance traveled by illuminating FLSs that failed after arrival (distance from dispatcher to illuminating point)                                                                                 |
-| Min_dist_failed_midflight_illuminate                    | Minimum distance traveled by illuminating FLSs that failed before arrival (distance from dispatcher to failure point)                                                                                    |
-| Max_dist_failed_midflight_illuminate                    | Maximum distance traveled by illuminating FLSs that failed before arrival (distance from dispatcher to failure point)                                                                                    |
-| Avg_dist_failed_midflight_illuminate                    | Average distance traveled by illuminating FLSs that failed before arrival (distance from dispatcher to failure point)                                                                                    |
-| Median_dist_failed_midflight_illuminate                 | Median distance traveled by illuminating FLSs that failed before arrival  (distance from dispatcher to failure point)                                                                                    |
-| Min_dist_stationary_standby_recover_illuminate          | Minimum distance traveled by a stationary standby to successfully recover a failed illuminating FLS                                                                                                      |
-| Max_dist_stationary_standby_recover_illuminate          | Maximum distance traveled by a stationary standby to successfully recover a failed illuminating FLS                                                                                                      |
-| Avg_dist_stationary_standby_recover_illuminate          | Average distance traveled by a stationary standby to successfully recover a failed illuminating FLS                                                                                                      |
-| Median_dist_stationary_standby_recover_illuminate       | Median distance traveled by a stationary standby to successfully recover a failed illuminating FLS                                                                                                       |
-| Min_dist_midflight_standby_recover_illuminate           | Minimum distance traveled by a mid-flight standby to successfully recover a failed illuminating FLS                                                                                                      |
-| Max_dist_midflight_standby_recover_illuminate           | Maximum distance traveled by a mid-flight standby to successfully recover a failed illuminating FLS                                                                                                      |
-| Avg_dist_midflight_standby_recover_illuminate           | Average distance traveled by a mid-flight standby to successfully recover a failed illuminating FLS                                                                                                      |
-| Median_dist_midflight_standby_recover_illuminate        | Median distance traveled by a mid-flight standby to successfully recover a failed illuminating FLS                                                                                                       |
-| Min_dist_standby_hub_to_centroid                        | Min distance traveled by a standby from dispatcher to its group centroid everytime it successfully complete its trip                                                                                     |
-| Max_dist_standby_hub_to_centroid                        | Maximum distance traveled by a standby from dispatcher to its assigned coordinate everytime it successfully complete its trip                                                                            |
-| Avg_dist_standby_hub_to_centroid                        | Avg distance traveled by a standby from dispatcher to its assigned coordinate everytime it successfully complete its trip                                                                                |
-| Median_dist_standby_hub_to_centroid                     | Median distance traveled by a standby from dispatcher to its assigned coordinate everytime it successfully complete its trip                                                                             |
-| Min_dist_standby_hub_to_fail_before_centroid            | Min Distance traveled by a standby FLS that never arrived at its group centroid                                                                                                                          |
-| Max_dist_standby_hub_to_fail_before_centroid            | Max Distance traveled by a standby FLS that never arrived at its group centroid                                                                                                                          |
-| Avg_dist_standby_hub_to_fail_before_centroid            | Avg Distance traveled by a standby FLS that never arrived at its group centroid                                                                                                                          |
-| Median_dist_standby_hub_to_fail_before_centroid         | Median Distance traveled by a standby FLS that never arrived at its group centroid                                                                                                                       |
-| Min_dist_standby_centroid_to_fail_before_recovered      | Min distance traveled by a standby stationary FLS that moves from its group centroid to recover a failed illuminating FLS and never arrives at its destination because it fails                          |
-| Max_dist_standby_centroid_to_fail_before_recovered      | Max distance traveled by a standby stationary FLS that moves from its group centroid to recover a failed illuminating FLS and never arrives at its destination because it fails                          |
-| Avg_dist_standby_centroid_to_fail_before_recovered      | Avg distance traveled by a standby stationary FLS that moves from its group centroid to recover a failed illuminating FLS and never arrives at its destination because it fails                          |
-| Median_dist_standby_centroid_to_fail_before_recovered   | Median distance traveled by a standby stationary FLS that moves from its group centroid to recover a failed illuminating FLS and never arrives at its destination because it fails                       |
-| Ill_Recovered_By_HUB                                    | Number of failed illuminating FLSs recovered by the Hub dispatching FLSs  (the new FLS arrives at the group centroid)                                                                                    |
-| Ill_Recovered_By_Standby                                | Number of failed illuminating FLSs recovered using a standby FLS (the new FLS arrives at the group centroid)                                                                                             |
-| Stdby_Recovered_By_Hub                                  | Number of failed standby FLSs recovered by the Hub (the new FLS arrives at the group centroid)                                                                                                           |
-| Num_FLSs_Queued                                         | Number of queued FLSs at the end of the experiment                                                                                                                                                       |
-| Failed Illuminating FLS                                 | Number of Failed Illuminating FLS                                                                                                                                                                        |
-| Failed Standby FLS                                      | Number of Failed Standby FLS After Reset                                                                                                                                                                 |
-| Hub_Deployed_FLS                                        | Failures that have been handled by the hub After Reset                                                                                                                                                   |
-| Hub_Deployed_FLS_To_Illuminate                          | Number of failed illuminating FLS that have been handled by the hub                                                                                                                                      |
-| Hub_Deployed_FLS_For_Standby                            | Number of Failed standby FLS that have been handled by the hub                                                                                                                                           |
-
-The Dispatcher sheet includes all information gathered by the primary node. 
-In a Dronevision/FLS Display context, this should be the information from the orchestrator.
-
-| Term             | Definition                                                                                  |
-|:-----------------|:--------------------------------------------------------------------------------------------|
-| dispatcher_coord | Array of coordinates of each dispatcher                                                     |
-| num_dispatched   | Number of FLSs that has been deployed by every dispatcher                                   |
-| avg_delay        | Array of Average delay for FLSs dispatched by each dispatcher After initial FLSs dispatched |
-| min_delay        | Array of Min delay for FLSs dispatched by each dispatcher After initial FLSs dispatched     |
-| max_delay        | Array of Max delay for FLSs dispatched by each dispatcher After initial FLSs dispatched     |
-| delay_info       | Lists of delayed time for FLSs dispatched by each dispatcher After initial FLSs dispatched  |
-| min_delay        | Overall Min delay for FLSs dispatched by each dispatcher After initial FLSs dispatched      |
-| max_delay        | Overall max delay for FLSs dispatched by each dispatcher After initial FLSs dispatched      |
-| avg_delay        | Overall average delay for FLSs dispatched by each dispatcher After initial FLSs dispatched  |
 
 # Analytical Models
-In addition to the decentralized emulator of FLSs, this repository contains several analytical models to model and evaluate different techniques for detecting and concealing dark standby FLSs.
+This repository contains several analytical models to model and evaluate different techniques for detecting and concealing dark standby FLSs.
 
 ## Velocity Model
 The movement of FLSs are calculated using the velocity model. We suppose all FLSs have the same maximum speed, maximum acceleration and deceleration.
@@ -371,6 +240,138 @@ This program relies on precomputed obstruction masks which are already in the `a
     * (c): `assets/obstructing/dragon/dragon_K3_GR10_dist_traveled_combined_suspend` `assets/obstructing/hat/hat_K3_GR10_dist_traveled_combined_suspend` `assets/obstructing/skateboard/skateboard_K3_GR10_dist_traveled_combined_suspend`
     * (d): `assets/obstructing/dragon/dragon_K3_GR10_dist_traveled_combined_suspend_hide` `assets/obstructing/hat/hat_K3_GR10_dist_traveled_combined_suspend_hide` `assets/obstructing/skateboard/skateboard_K3_GR10_dist_traveled_combined_suspend_hide`
     * (e): `assets/obstructing/dragon/dragon_K3_GR10_dist_traveled_combined_suspend_hide_obstructed` `assets/obstructing/hat/hat_K3_GR10_dist_traveled_combined_suspend_hide_obstructed` `assets/obstructing/skateboard/skateboard_K3_GR10_dist_traveled_combined_suspend_hide_obstructed`
+
+
+# Emulator
+This software include a scalable emulator of FLSs described in Appendix A. It emulates operation of multiple FLSs to illuminate a 3d point cloud by running parallel processes.  
+It consists three types of processes, Orchestrator, Secondary, and FLS processes. Orchestrator and Secondary processes are artifacts that facilitate running a large number of FLS processes across different servers of a datacenter. FLS processes implements functionalities and characteristics of an FLS such as flying, communicating, and failing.
+Point clouds with small number of points can be run locally on a single machine while with larger number of points multiple machines with multiple cores are required.
+
+## Run Local
+
+The variables specified in `config.py` control settings. Once these are adjusted (see below), run:
+
+`python3 primary.py`
+
+After the notification "INFO - Waiting for secondary nodes to connect" shows, run:
+
+`python3 secondary.py`
+
+Need to notice that the result output path is also an adjustable configuration.
+
+## Set Up and Run on Cloud Lab
+First, set up a cluster of servers. Creat a cloudlab profile using the file `profile.py`, then start your own experiments with any chosen type of nodes. 
+Ideally, the total number of cores of the servers should equal or be greater than the number of points in the point cloud (number of FLSs).
+Otherwise, the lack of cores may cause incorrect results. Normally, when the accessible resource is limited, one core for 2 to 4 points will also work. 
+ 
+After setting up cloudlab, modify the following files based on comment:
+
+* `gen_conf_cluster`: Identify the path where the gen_conf.py lies
+* `cloudlab_vars.sh`： set the number of nodes 
+* `constants.py`: Set broadcast address and port
+
+Change the configuration for experiments in `gen_conf.py`, this will be the base script to generate configure for each experiment.
+Once it's settle, checkout the number of total configurations, and change the number in the For Loop to `the total configuration sets - 1`.
+The system will traverse all these configuration sets.
+
+Finally, modify the script `decentralized_gen.sh` following the comment just like previous files. Then run the script to clone the
+project and setup on cloudlab (See section above).
+
+Run `bash setup.sh` to set up the project.
+
+After all above are done, run `bash nohup_run.sh` on the primary node (node with index 0). Use `tail -f my.log` to trace output in the root directory.
+
+To stop the running process, run the `sudo pkill python3` command in `decentralized_gen.sh`, then run `nohup_kill.sh` on
+the primary node.
+
+## Experiment Report
+
+The final report will be generated in a folder named with the experiment configuration, under the result path directory.
+A report will include 3 data sheets:
+ * Metrics
+ * Config
+ * Dispatcher
+
+The Metric sheet includes all the reporting information, detailed description shown blown:
+
+| Term                                                    | Definition                                                                                                                                                                                               |
+|:--------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| QoI before Reset                                        | Percentage of illuminating FLSs defined as the number of illuminating FLSs divided by the total number of required FLSs (points in a point cloud).  Measured once all initial FLSs have been dispatched. |
+| QoI after Reset                                         | Same as above, but measured at the end of the experiment                                                                                                                                                 |
+| Dispatched Before Reset                                 | Number of FLSs dispatched before all initial illuminating and initial standby FLSs were dispatched                                                                                                       |
+| Dispatched After Reset                                  | Number of FLSs dispatched after all initial illuminating and initial standby FLSs were dispatched                                                                                                        |
+| Failure Before Reset                                    | Number of failed FLSs before all initial illuminating and initial standby FLSs were dispatched                                                                                                           |
+| Failure After Reset                                     | Number of failed FLSs after all initial illuminating and initial standby FLSs were dispatched                                                                                                            |
+| Mid-Flight                                              | Number of mid-flight FLSs at the end of the experiment                                                                                                                                                   |
+| Illuminating                                            | Number of illuminating FLSs at the end of the experiment                                                                                                                                                 |
+| Stationary Standby                                      | Number of stationary FLSs at the end of the experiment                                                                                                                                                   |
+| Avg Travel Time                                         | Depends on the speed model, average time to travel the distance                                                                                                                                          |
+| Min Travel Time                                         | Depends on the speed model, min time to travel the distance                                                                                                                                              |
+| Max Travel Time                                         | Depends on the speed model, max time to travel the distance                                                                                                                                              |
+| Median Travel Time                                      | Depends on the speed model, median time to travel the distance                                                                                                                                           |
+| Avg Dist Traveled                                       | Average distance traveled by the dispatched FLSs                                                                                                                                                         |
+| Min Dist Traveled                                       | Minimum distance traveled by the dispatched FLSs                                                                                                                                                         |
+| Max Dist Traveled                                       | Maximum distance traveled by the dispatched FLSs                                                                                                                                                         |
+| Median Dist Traveled                                    | Median distance traveled by the dispatched FLSs                                                                                                                                                          |
+| Avg MTTR                                                | Average mean time to repair an FLS                                                                                                                                                                       |
+| Min MTTR                                                | Minimum mean time to repair an FLS                                                                                                                                                                       |
+| Max MTTR                                                | Maximum mean time to repair an FLS                                                                                                                                                                       |
+| Median MTTR                                             | Median mean time to repair an FLS                                                                                                                                                                        |
+| Deploy Rate before reset                                | The rate at which a dispatcher deploys FLSs when initiating an illumination                                                                                                                              |
+| Deploy rate After Reset                                 | The rate at which a dispatcher deploys FLSs after all FLSs to illuminate a shape have been deployed                                                                                                      |
+| Number of Groups                                        | Number of reliability groups                                                                                                                                                                             |
+| Min_dist_arrived_illuminate                             | Minimum distance traveled by illuminating FLSs that failed after arrival (distance from dispatcher to illuminating point)                                                                                |
+| Max_dist_arrived_illuminate                             | Maximum distance traveled by illuminating FLSs that failed after arrival (distance from dispatcher to illuminating point)                                                                                |
+| Avg_dist_arrived_illuminate                             | Average distance traveled by illuminating FLSs that failed after arrival (distance from dispatcher to illuminating point)                                                                                |
+| Median_dist_arrived_illuminate                          | Median distance traveled by illuminating FLSs that failed after arrival (distance from dispatcher to illuminating point)                                                                                 |
+| Min_dist_failed_midflight_illuminate                    | Minimum distance traveled by illuminating FLSs that failed before arrival (distance from dispatcher to failure point)                                                                                    |
+| Max_dist_failed_midflight_illuminate                    | Maximum distance traveled by illuminating FLSs that failed before arrival (distance from dispatcher to failure point)                                                                                    |
+| Avg_dist_failed_midflight_illuminate                    | Average distance traveled by illuminating FLSs that failed before arrival (distance from dispatcher to failure point)                                                                                    |
+| Median_dist_failed_midflight_illuminate                 | Median distance traveled by illuminating FLSs that failed before arrival  (distance from dispatcher to failure point)                                                                                    |
+| Min_dist_stationary_standby_recover_illuminate          | Minimum distance traveled by a stationary standby to successfully recover a failed illuminating FLS                                                                                                      |
+| Max_dist_stationary_standby_recover_illuminate          | Maximum distance traveled by a stationary standby to successfully recover a failed illuminating FLS                                                                                                      |
+| Avg_dist_stationary_standby_recover_illuminate          | Average distance traveled by a stationary standby to successfully recover a failed illuminating FLS                                                                                                      |
+| Median_dist_stationary_standby_recover_illuminate       | Median distance traveled by a stationary standby to successfully recover a failed illuminating FLS                                                                                                       |
+| Min_dist_midflight_standby_recover_illuminate           | Minimum distance traveled by a mid-flight standby to successfully recover a failed illuminating FLS                                                                                                      |
+| Max_dist_midflight_standby_recover_illuminate           | Maximum distance traveled by a mid-flight standby to successfully recover a failed illuminating FLS                                                                                                      |
+| Avg_dist_midflight_standby_recover_illuminate           | Average distance traveled by a mid-flight standby to successfully recover a failed illuminating FLS                                                                                                      |
+| Median_dist_midflight_standby_recover_illuminate        | Median distance traveled by a mid-flight standby to successfully recover a failed illuminating FLS                                                                                                       |
+| Min_dist_standby_hub_to_centroid                        | Min distance traveled by a standby from dispatcher to its group centroid everytime it successfully complete its trip                                                                                     |
+| Max_dist_standby_hub_to_centroid                        | Maximum distance traveled by a standby from dispatcher to its assigned coordinate everytime it successfully complete its trip                                                                            |
+| Avg_dist_standby_hub_to_centroid                        | Avg distance traveled by a standby from dispatcher to its assigned coordinate everytime it successfully complete its trip                                                                                |
+| Median_dist_standby_hub_to_centroid                     | Median distance traveled by a standby from dispatcher to its assigned coordinate everytime it successfully complete its trip                                                                             |
+| Min_dist_standby_hub_to_fail_before_centroid            | Min Distance traveled by a standby FLS that never arrived at its group centroid                                                                                                                          |
+| Max_dist_standby_hub_to_fail_before_centroid            | Max Distance traveled by a standby FLS that never arrived at its group centroid                                                                                                                          |
+| Avg_dist_standby_hub_to_fail_before_centroid            | Avg Distance traveled by a standby FLS that never arrived at its group centroid                                                                                                                          |
+| Median_dist_standby_hub_to_fail_before_centroid         | Median Distance traveled by a standby FLS that never arrived at its group centroid                                                                                                                       |
+| Min_dist_standby_centroid_to_fail_before_recovered      | Min distance traveled by a standby stationary FLS that moves from its group centroid to recover a failed illuminating FLS and never arrives at its destination because it fails                          |
+| Max_dist_standby_centroid_to_fail_before_recovered      | Max distance traveled by a standby stationary FLS that moves from its group centroid to recover a failed illuminating FLS and never arrives at its destination because it fails                          |
+| Avg_dist_standby_centroid_to_fail_before_recovered      | Avg distance traveled by a standby stationary FLS that moves from its group centroid to recover a failed illuminating FLS and never arrives at its destination because it fails                          |
+| Median_dist_standby_centroid_to_fail_before_recovered   | Median distance traveled by a standby stationary FLS that moves from its group centroid to recover a failed illuminating FLS and never arrives at its destination because it fails                       |
+| Ill_Recovered_By_HUB                                    | Number of failed illuminating FLSs recovered by the Hub dispatching FLSs  (the new FLS arrives at the group centroid)                                                                                    |
+| Ill_Recovered_By_Standby                                | Number of failed illuminating FLSs recovered using a standby FLS (the new FLS arrives at the group centroid)                                                                                             |
+| Stdby_Recovered_By_Hub                                  | Number of failed standby FLSs recovered by the Hub (the new FLS arrives at the group centroid)                                                                                                           |
+| Num_FLSs_Queued                                         | Number of queued FLSs at the end of the experiment                                                                                                                                                       |
+| Failed Illuminating FLS                                 | Number of Failed Illuminating FLS                                                                                                                                                                        |
+| Failed Standby FLS                                      | Number of Failed Standby FLS After Reset                                                                                                                                                                 |
+| Hub_Deployed_FLS                                        | Failures that have been handled by the hub After Reset                                                                                                                                                   |
+| Hub_Deployed_FLS_To_Illuminate                          | Number of failed illuminating FLS that have been handled by the hub                                                                                                                                      |
+| Hub_Deployed_FLS_For_Standby                            | Number of Failed standby FLS that have been handled by the hub                                                                                                                                           |
+
+The Dispatcher sheet includes all information gathered by the primary node. 
+In a Dronevision/FLS Display context, this should be the information from the orchestrator.
+
+| Term             | Definition                                                                                  |
+|:-----------------|:--------------------------------------------------------------------------------------------|
+| dispatcher_coord | Array of coordinates of each dispatcher                                                     |
+| num_dispatched   | Number of FLSs that has been deployed by every dispatcher                                   |
+| avg_delay        | Array of Average delay for FLSs dispatched by each dispatcher After initial FLSs dispatched |
+| min_delay        | Array of Min delay for FLSs dispatched by each dispatcher After initial FLSs dispatched     |
+| max_delay        | Array of Max delay for FLSs dispatched by each dispatcher After initial FLSs dispatched     |
+| delay_info       | Lists of delayed time for FLSs dispatched by each dispatcher After initial FLSs dispatched  |
+| min_delay        | Overall Min delay for FLSs dispatched by each dispatcher After initial FLSs dispatched      |
+| max_delay        | Overall max delay for FLSs dispatched by each dispatcher After initial FLSs dispatched      |
+| avg_delay        | Overall average delay for FLSs dispatched by each dispatcher After initial FLSs dispatched  |
 
 
 ## Citations
