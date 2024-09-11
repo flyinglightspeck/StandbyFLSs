@@ -194,6 +194,7 @@ In a Dronevision/FLS Display context, this should be the information from the or
 | avg_delay        | Overall average delay for FLSs dispatched by each dispatcher After initial FLSs dispatched  |
 
 # Analytical Models
+In addition to the decentralized emulator of FLSs, this repository contains several analytical models to model and evaluate different techniques for detecting and concealing dark standby FLSs.
 
 ## Velocity Model
 The movement of FLSs are calculated using the velocity model. We suppose all FLSs have the same maximum speed, maximum acceleration and deceleration.
@@ -248,6 +249,7 @@ Standby FLSs remain dark while waiting to recover failed FLSs. Thus, it may bloc
 The program `./utils/detect_obstruction.py` implements analytical models to detect obstructing standby FLSs. It has two variants:
    * One assumes the user is looking at the shape from six views: [front, back, top, bottom, left, right]. To use this variant run `./utils/detect_obstruction.py --six-view`.
    * The other assumes the user is walking around the shape on a circle while looking at the shape. To use this variant run `./utils/detect_obstruction.py` without arguments.
+The outcomes of these models are already generated and available in `assests/obstructing/Q*` directories.
 
 `./utils/detect_obstruction.py` assumes:
 
@@ -329,7 +331,7 @@ This information is reported for each shape, group size, Q and view or angle dep
 
 ## Dissolve, Suspend and Transpose
 Obstructing FLSs needs to be hidden from user's Field of View (FoV).
-We have proposed four techniques: dissolve, suspend (2 variants), and transpose. `./utils/solve_obstruction.py` includes the implementation of techniques presented in Section 6.
+We have proposed five techniques: dissolve, suspend (3 variants), and transpose. `./utils/solve_obstruction.py` includes the implementation of techniques presented in Section 6.
 
 Dissolve will permanently dissolve reliability groups that have standby FLSs obstructing user's FoV. `dissolve` function implements Algorithm 3.
 
@@ -337,16 +339,39 @@ Suspend will temporarily dissolve reliability groups that have standby FLSs obst
 and these groups will be restored once their standby FLSs are no longer in user's FOV.
 One variant of suspend requires the obstructing standby FLS to move back to the hangar when its reliability group is suspended. `suspend` function implements this variant (Algorithm 4).
 Another variant of suspend moves obstructing FLSs into illumination cells of the closest illuminating FLS. 
- This option is only available when the Illumination Cell to Display Cell Ratio (Q) is no smaller than 3. It is implemented in `suspend_hide` function.
+ This option is only available when the Illumination Cell to Display Cell Ratio (Q) is no smaller than 3. It is implemented in `suspend_hide` function. One other variant moves the obstructing FLS into the illumination cell of the obstructed FLS. `suspend_hide_obstructed` implements this variant.
 
 Transpose moves obstructing FLSs back along the user's eye gaze, and make it replace blocked illuminating FLSs;
  while illuminating FLSs move back short distances and become new standby FLSs that hide behind. (As described in previous section.)
 
-To run this, first run `./utils/detect_obstruction.py` to generate required obstruction information files.
-Then run `./utils/solve_obstruction.py` with the same configurations.
-Plots showing those results will be generated in corresponding repositories.
+To compair these techniques run `./utils/solve_obstruction.py`.
+Plots showing those results will be generated in corresponding directories in `assets/obstructing`.
+This program relies on precomputed obstruction masks which are already in the `assets/obstructing/Q*` directories. Run `./utils/detect_obstruction.py` to regenerate these files if needed.
 
 ![](assets/figures/Workflow_Suspend_Dissolve_hide.png)
+
+
+# Reproduction of results
+
+* Figures 17 and 18: `python utils/standby_or_dispatcher.py` outputs the graphs in assets directory.
+* Figures 19, 20, 21, 22, 23 and 24: `python utils/solve_obstruction.py` outputs the following graphs:
+  * Figure 19: (a) `assets/obstructing/skateboard/skateboard_K3_GR10_dissolve_percentage.png`
+(b) `assets/obstructing/skateboard/skateboard_K3_GR10_suspend_percentage.png`
+  * Figure 20: (a) `assets/obstructing/skateboard/skateboard_K3_GR10_MTID_percentage_dissolve.png` (b) `assets/obstructing/skateboard/skateboard_K3_GR10_MTID_percentage_suspend.png`
+  * Figure 21: (a) `assets/obstructing/skateboard/skateboard_K3_GR10_dist_traveled_dissolve.png` (b) `assets/obstructing/skateboard/skateboard_K3_GR10_dist_traveled_suspend.png` (c) `assets/obstructing/skateboard/skateboard_K3_GR10_dist_traveled_restore_suspend.png`
+  * Figure 22: (a) `assets/obstructing/skateboard/skateboard_K3_Q3_GR10_MTID_CMP.png` (b) `assets/obstructing/skateboard/skateboard_K3_Q5_GR10_MTID_CMP.png` (c) `assets/obstructing/skateboard/skateboard_K3_Q10_GR10_MTID_CMP.png`
+  * Figure 23:
+    * (a): `assets/obstructing/dragon/dragon_K3_GR10_MTID_percentage_transpose` `assets/obstructing/hat/hat_K3_GR10_MTID_percentage_transpose` `assets/obstructing/skateboard/skateboard_K3_GR10_MTID_percentage_transpose`
+    * (b): `assets/obstructing/dragon/dragon_K3_GR10_MTID_percentage_dissolve` `assets/obstructing/hat/hat_K3_GR10_MTID_percentage_dissolve` `assets/obstructing/skateboard/skateboard_K3_GR10_MTID_percentage_dissolve`
+    * (c): `assets/obstructing/dragon/dragon_K3_GR10_MTID_percentage_suspend` `assets/obstructing/hat/hat_K3_GR10_MTID_percentage_suspend` `assets/obstructing/skateboard/skateboard_K3_GR10_MTID_percentage_suspend`
+    * (d): `assets/obstructing/dragon/dragon_K3_GR10_MTID_percentage_suspend_hide_obstructed` `assets/obstructing/hat/hat_K3_GR10_MTID_percentage_suspend_hide_obstructed` `assets/obstructing/skateboard/skateboard_K3_GR10_MTID_percentage_suspend_hide_obstructed`
+  * Figure 24:
+    * (a): `assets/obstructing/dragon/dragon_K3_GR10_dist_traveled_transpose` `assets/obstructing/hat/hat_K3_GR10_dist_traveled_transpose` `assets/obstructing/skateboard/skateboard_K3_GR10_dist_traveled_transpose`
+    * (b): `assets/obstructing/dragon/dragon_K3_GR10_dist_traveled_dissolve` `assets/obstructing/hat/hat_K3_GR10_dist_traveled_dissolve` `assets/obstructing/skateboard/skateboard_K3_GR10_dist_traveled_dissolve`
+    * (c): `assets/obstructing/dragon/dragon_K3_GR10_dist_traveled_combined_suspend` `assets/obstructing/hat/hat_K3_GR10_dist_traveled_combined_suspend` `assets/obstructing/skateboard/skateboard_K3_GR10_dist_traveled_combined_suspend`
+    * (d): `assets/obstructing/dragon/dragon_K3_GR10_dist_traveled_combined_suspend_hide` `assets/obstructing/hat/hat_K3_GR10_dist_traveled_combined_suspend_hide` `assets/obstructing/skateboard/skateboard_K3_GR10_dist_traveled_combined_suspend_hide`
+    * (e): `assets/obstructing/dragon/dragon_K3_GR10_dist_traveled_combined_suspend_hide_obstructed` `assets/obstructing/hat/hat_K3_GR10_dist_traveled_combined_suspend_hide_obstructed` `assets/obstructing/skateboard/skateboard_K3_GR10_dist_traveled_combined_suspend_hide_obstructed`
+
 
 ## Citations
 
